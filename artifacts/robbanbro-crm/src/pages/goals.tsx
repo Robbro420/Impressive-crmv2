@@ -81,7 +81,7 @@ export default function Goals() {
             return (
               <Card key={goal.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${isCompleted ? 'border-emerald-300' : ''}`}>
                 {isCompleted && (
-                  <div className="absolute top-0 right-0 py-1 px-4 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-xl" style={{background: "hsl(var(--success))"}}>Uppnått ✓</div>
+                  <div className="absolute top-0 right-0 py-1 px-4 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-xl gradient-success">Uppnått ✓</div>
                 )}
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -111,26 +111,14 @@ export default function Goals() {
                   {/* Gradient progress bar */}
                   <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: `${percentage}%`,
-                        background: isCompleted
-                          ? 'hsl(var(--success))'
-                          : 'hsl(var(--primary))',
-                      }}
+                      className={`h-full rounded-full transition-all duration-700 ${isCompleted ? 'gradient-success' : 'gradient-bg'}`}
+                      style={{ width: `${percentage}%` }}
                     />
                   </div>
 
                   <div className="flex justify-between items-center mt-2 text-xs font-bold">
                     <span className="text-muted-foreground font-semibold">{percentage === 0 ? 'Inte startat' : 'Pågår'}</span>
-                    <span style={{
-                      background: isCompleted
-                        ? 'hsl(var(--success))'
-                        : 'hsl(var(--primary))',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                    }}>{percentage}%</span>
+                    <span className={`font-black ${isCompleted ? 'text-emerald-600' : 'gradient-text'}`}>{percentage}%</span>
                   </div>
                 </CardContent>
               </Card>

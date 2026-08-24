@@ -54,7 +54,7 @@ export function SalesGoalCard({
   return (
     <Card className={`relative overflow-hidden transition-all hover:shadow-lg ${isCompleted ? "border-emerald-300" : ""}`}>
       {isCompleted && (
-        <div className="absolute top-0 right-0 py-1 px-4 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-xl" style={{ background: "hsl(var(--success))" }}>
+        <div className="absolute top-0 right-0 py-1 px-4 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-xl gradient-success">
           Uppnått ✓
         </div>
       )}
@@ -89,11 +89,8 @@ export function SalesGoalCard({
           <>
             <div className="h-2.5 w-full bg-secondary rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full transition-all duration-700"
-                style={{
-                  width: `${percentage}%`,
-                  background: isCompleted ? "hsl(var(--success))" : "var(--brand-gradient)",
-                }}
+                className={`h-full rounded-full transition-all duration-700 ${isCompleted ? "gradient-success" : "gradient-bg"}`}
+                style={{ width: `${percentage}%` }}
               />
             </div>
             <div className="flex justify-between items-center mt-2 text-xs">
