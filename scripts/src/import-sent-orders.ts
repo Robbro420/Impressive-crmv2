@@ -63,7 +63,7 @@ async function main() {
   console.log(`Server: ${MAIL_HOST} · sedan ${SINCE.toISOString().slice(0, 10)}${DRY_RUN ? " · TESTLÄGE (skickar inget)" : ""}\n`);
 
   const user = await ask("Din mejladress (avsändarkontot): ");
-  const pass = await ask("Lösenord (visas som ***): ", true);
+  const pass = await ask("Lösenord (syns inte alls när du skriver): ", true);
 
   const client = new ImapFlow({
     host: MAIL_HOST,
@@ -71,6 +71,9 @@ async function main() {
     secure: true,
     auth: { user, pass },
     logger: false,
+    // TLS_INSECURE=1 krävs när antivirus/brandvägg avlyssnar TLS-trafiken
+    // ("self-signed certificate in certificate chain")
+    tls: process.env.TLS_INSECURE === "1" ? { rejectUnauthorized: false } : undefined,
   });
 
   console.log("\nAnsluter…");
