@@ -55,16 +55,16 @@ function UpsellDialog({
       <div style={{
         background: "#fff", borderRadius: 20, padding: "32px 28px",
         maxWidth: 400, width: "calc(100% - 32px)",
-        boxShadow: "0 24px 80px rgba(124,58,237,0.2)",
-        border: "1px solid rgba(124,58,237,0.1)",
+        boxShadow: "0 24px 80px rgba(20,20,43,0.16)",
+        border: "1px solid rgba(20,20,43,0.06)",
         animation: "upsell-in 0.25s cubic-bezier(0.34,1.56,0.64,1)",
       }}>
         {/* Icon */}
         <div style={{
           width: 52, height: 52, borderRadius: 14,
-          background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+          background: "hsl(var(--primary))",
           display: "flex", alignItems: "center", justifyContent: "center",
-          marginBottom: 16, boxShadow: "0 8px 24px rgba(124,58,237,0.3)",
+          marginBottom: 16, boxShadow: "0 8px 24px rgba(20,20,43,0.12)",
         }}>
           <Sparkles size={22} color="#fff" />
         </div>
@@ -83,11 +83,11 @@ function UpsellDialog({
             disabled={loading}
             style={{
               flex: 1, height: 42, borderRadius: 11, border: "none",
-              background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+              background: "hsl(var(--primary))",
               color: "#fff", fontWeight: 700, fontSize: 14,
               cursor: loading ? "not-allowed" : "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              boxShadow: "0 4px 14px rgba(124,58,237,0.3)",
+              boxShadow: "0 1px 3px rgba(20,20,43,0.12)",
               fontFamily: "inherit",
             }}
           >
@@ -440,7 +440,7 @@ export default function Dashboard() {
                   </span>{" "}jämfört med förra veckan
                 </p>
               </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#7c3aed,#06b6d4)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--primary))" }}>
                 <TrendingUp className="h-5 w-5 text-white" />
               </div>
             </div>
@@ -455,7 +455,7 @@ export default function Dashboard() {
                 <div className="text-3xl font-black tracking-tight">{loadingQueue ? "–" : queue.length}</div>
                 <p className="text-xs text-muted-foreground mt-2 font-medium">Ordrar som väntar på produktion</p>
               </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#f59e0b,#ef4444)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--warning))" }}>
                 <Package className="h-5 w-5 text-white" />
               </div>
             </div>
@@ -470,7 +470,7 @@ export default function Dashboard() {
                 <div className="text-3xl font-black tracking-tight">{loadingCampaigns ? "–" : campaigns.length}</div>
                 <p className="text-xs text-muted-foreground mt-2 font-medium">Kampanjer som är igång just nu</p>
               </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#10b981,#06b6d4)" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--success))" }}>
                 <Megaphone className="h-5 w-5 text-white" />
               </div>
             </div>
@@ -488,19 +488,19 @@ export default function Dashboard() {
           <svg width="0" height="0">
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#7c3aed" />
-                <stop offset="100%" stopColor="#06b6d4" />
+                <stop offset="0%" stopColor="#6352c5" />
+                <stop offset="100%" stopColor="#8b7ce0" />
               </linearGradient>
             </defs>
           </svg>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={trend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f4" />
-              <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Outfit" />
-              <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Outfit" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+              <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" />
+              <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
               <RechartsTooltip
-                cursor={{ fill: "rgba(124,58,237,0.05)" }}
-                contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 8px 24px rgba(124,58,237,0.12)", fontSize: "13px", fontFamily: "Outfit" }}
+                cursor={{ fill: "rgba(99,82,197,0.05)" }}
+                contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 8px 24px rgba(20,20,43,0.08)", fontSize: "13px", fontFamily: "Inter" }}
                 formatter={(value: number) => [`${value.toLocaleString("sv-SE")} kr`, "Omsättning"]}
               />
               <Bar dataKey="revenue" radius={[6, 6, 0, 0]} maxBarSize={36} fill="url(#barGradient)" />
@@ -526,7 +526,7 @@ export default function Dashboard() {
               label="Produktionskö"
               count={queue.length}
               icon={Package}
-              accentColor="linear-gradient(135deg,#f59e0b,#ef4444)"
+              accentColor="hsl(var(--warning))"
               isEmpty={queue.length === 0}
             >
               {queue.map((order) => (
@@ -540,7 +540,7 @@ export default function Dashboard() {
               label="Aktiva Kampanjer"
               count={campaigns.length}
               icon={Megaphone}
-              accentColor="linear-gradient(135deg,#10b981,#06b6d4)"
+              accentColor="hsl(var(--success))"
               isEmpty={campaigns.length === 0}
             >
               {campaigns.map((order) => (
@@ -554,7 +554,7 @@ export default function Dashboard() {
               label="Uppföljning / Mersälj"
               count={followups.length}
               icon={PhoneOutgoing}
-              accentColor="linear-gradient(135deg,#7c3aed,#06b6d4)"
+              accentColor="hsl(var(--primary))"
               isEmpty={followups.length === 0}
             >
               {followups.map((order) => (

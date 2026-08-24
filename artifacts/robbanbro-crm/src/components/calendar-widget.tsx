@@ -155,7 +155,7 @@ export function CalendarWidget() {
         title="Kalender & loggbok"
         className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all cursor-pointer w-full group"
         style={open
-          ? { background: "linear-gradient(135deg,#7c3aed,#06b6d4)", color: "#fff", boxShadow: "0 4px 14px rgba(124,58,237,0.3)" }
+          ? { background: "hsl(var(--primary))", color: "#fff", boxShadow: "0 1px 3px rgba(20,20,43,0.12)" }
           : { color: "hsl(var(--muted-foreground))" }
         }
       >
@@ -181,12 +181,12 @@ export function CalendarWidget() {
           width: 400,
           height: "100dvh",
           background: "#fff",
-          boxShadow: "-4px 0 40px rgba(124,58,237,0.12)",
+          boxShadow: "-4px 0 40px rgba(20,20,43,0.08)",
           zIndex: 40,
           display: "flex",
           flexDirection: "column",
           transition: "right 0.3s cubic-bezier(0.4,0,0.2,1)",
-          borderLeft: "1px solid rgba(124,58,237,0.1)",
+          borderLeft: "1px solid rgba(20,20,43,0.06)",
         }}
       >
         {/* Header */}
@@ -196,11 +196,11 @@ export function CalendarWidget() {
           display: "flex",
           alignItems: "center",
           gap: 10,
-          background: "linear-gradient(135deg,#7c3aed08,#06b6d408)",
+          background: "hsl(var(--primary) / 0.04)",
         }}>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
-            background: "linear-gradient(135deg,#7c3aed,#06b6d4)",
+            background: "hsl(var(--primary))",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}>
             <CalendarDays size={16} color="#fff" />
@@ -263,12 +263,12 @@ export function CalendarWidget() {
                     fontSize: 13,
                     transition: "all 0.15s",
                     background: isSelected
-                      ? "linear-gradient(135deg,#7c3aed,#06b6d4)"
+                      ? "hsl(var(--primary))"
                       : isToday
-                        ? "rgba(124,58,237,0.08)"
+                        ? "rgba(99,82,197,0.08)"
                         : "transparent",
-                    color: isSelected ? "#fff" : isToday ? "#7c3aed" : "#333",
-                    outline: isToday && !isSelected ? "1.5px solid rgba(124,58,237,0.3)" : "none",
+                    color: isSelected ? "#fff" : isToday ? "hsl(var(--primary))" : "#333",
+                    outline: isToday && !isSelected ? "1.5px solid rgba(20,20,43,0.12)" : "none",
                   }}
                 >
                   {day}
@@ -281,7 +281,7 @@ export function CalendarWidget() {
                       width: 4,
                       height: 4,
                       borderRadius: "50%",
-                      background: isSelected ? "rgba(255,255,255,0.8)" : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                      background: isSelected ? "rgba(255,255,255,0.8)" : "hsl(var(--primary))",
                       display: "block",
                     }} />
                   )}
@@ -308,7 +308,7 @@ export function CalendarWidget() {
               width: "100%",
               resize: "none",
               border: "1.5px solid",
-              borderColor: draft ? "rgba(124,58,237,0.3)" : "#e5e7eb",
+              borderColor: draft ? "rgba(20,20,43,0.12)" : "#e5e7eb",
               borderRadius: 12,
               padding: "12px 14px",
               fontSize: 13,
@@ -319,8 +319,8 @@ export function CalendarWidget() {
               transition: "border-color 0.2s",
               background: "#fafaf9",
             }}
-            onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(124,58,237,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(124,58,237,0.08)" }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = draft ? "rgba(124,58,237,0.3)" : "#e5e7eb"; e.currentTarget.style.boxShadow = "none" }}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "rgba(99,82,197,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(99,82,197,0.08)" }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = draft ? "rgba(20,20,43,0.12)" : "#e5e7eb"; e.currentTarget.style.boxShadow = "none" }}
           />
 
           <div style={{ marginTop: 10, display: "flex", gap: 8, alignItems: "center" }}>
@@ -334,7 +334,7 @@ export function CalendarWidget() {
                 border: "none",
                 background: saving || !hasChanges
                   ? "#f0f0f0"
-                  : "linear-gradient(135deg,#7c3aed,#06b6d4)",
+                  : "hsl(var(--primary))",
                 color: saving || !hasChanges ? "#aaa" : "#fff",
                 fontWeight: 700,
                 fontSize: 13,
@@ -344,7 +344,7 @@ export function CalendarWidget() {
                 justifyContent: "center",
                 gap: 6,
                 transition: "all 0.2s",
-                boxShadow: saving || !hasChanges ? "none" : "0 4px 14px rgba(124,58,237,0.25)",
+                boxShadow: saving || !hasChanges ? "none" : "0 4px 14px rgba(20,20,43,0.12)",
                 fontFamily: "inherit",
               }}
             >

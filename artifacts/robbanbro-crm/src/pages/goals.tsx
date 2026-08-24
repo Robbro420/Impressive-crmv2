@@ -50,7 +50,7 @@ export default function Goals() {
             return (
               <Card key={goal.id} className={`relative overflow-hidden transition-all hover:shadow-lg ${isCompleted ? 'border-emerald-300' : ''}`}>
                 {isCompleted && (
-                  <div className="absolute top-0 right-0 py-1 px-4 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-xl" style={{background: "linear-gradient(135deg,#10b981,#06b6d4)"}}>Uppnått ✓</div>
+                  <div className="absolute top-0 right-0 py-1 px-4 text-white text-[10px] font-black uppercase tracking-wider rounded-bl-xl" style={{background: "hsl(var(--success))"}}>Uppnått ✓</div>
                 )}
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -62,7 +62,7 @@ export default function Goals() {
                   </div>
                   <CardTitle className="text-xl font-black">{goal.name}</CardTitle>
                   <CardDescription className="flex items-center gap-1.5 mt-1 text-sm font-semibold">
-                    <TrendingUp className="h-3.5 w-3.5" style={{color: "#7c3aed"}} />
+                    <TrendingUp className="h-3.5 w-3.5" style={{color: "hsl(var(--primary))"}} />
                     Mäter: {getMetricLabel(goal.metric)}
                   </CardDescription>
                 </CardHeader>
@@ -84,8 +84,8 @@ export default function Goals() {
                       style={{
                         width: `${percentage}%`,
                         background: isCompleted
-                          ? 'linear-gradient(90deg,#10b981,#06b6d4)'
-                          : 'linear-gradient(90deg,#7c3aed,#06b6d4)',
+                          ? 'hsl(var(--success))'
+                          : 'hsl(var(--primary))',
                       }}
                     />
                   </div>
@@ -94,8 +94,8 @@ export default function Goals() {
                     <span className="text-muted-foreground font-semibold">{percentage === 0 ? 'Inte startat' : 'Pågår'}</span>
                     <span style={{
                       background: isCompleted
-                        ? 'linear-gradient(90deg,#10b981,#06b6d4)'
-                        : 'linear-gradient(90deg,#7c3aed,#06b6d4)',
+                        ? 'hsl(var(--success))'
+                        : 'hsl(var(--primary))',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
                       backgroundClip: 'text',
@@ -107,8 +107,8 @@ export default function Goals() {
           })
         ) : (
           <div className="col-span-full text-center p-16 bg-card rounded-2xl border border-dashed border-border">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{background: "linear-gradient(135deg,#7c3aed22,#06b6d422)"}}>
-              <Target className="h-8 w-8" style={{color: "#7c3aed"}} />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{background: "hsl(var(--primary) / 0.1)"}}>
+              <Target className="h-8 w-8" style={{color: "hsl(var(--primary))"}} />
             </div>
             <p className="font-black text-foreground text-xl">Inga mål uppsatta</p>
             <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto font-medium">Skapa ditt första mål för att börja mäta företagets prestation och motivera teamet.</p>

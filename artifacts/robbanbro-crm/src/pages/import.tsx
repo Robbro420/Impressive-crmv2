@@ -143,7 +143,7 @@ export default function ImportPage() {
   if (savedCustomerId) {
     return (
       <div className="max-w-xl mx-auto text-center py-20 animate-in fade-in duration-500">
-        <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "linear-gradient(135deg,#10b981,#06b6d4)" }}>
+        <div className="w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center" style={{ background: "hsl(var(--success))" }}>
           <CheckCircle2 className="h-8 w-8 text-white" />
         </div>
         <h1 className="text-2xl font-black tracking-tight mb-2">Order importerad! 🎉</h1>

@@ -12,7 +12,7 @@ export interface ButtonProps
 const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
 
 const variants = {
-  default: "text-white shadow-md hover:opacity-90 active:scale-[0.98]",
+  default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 active:scale-[0.98]",
   destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
   outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
   secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
@@ -40,14 +40,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", asChild = false, style, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
 
-    const defaultGradientStyle = variant === "default" 
-      ? { background: "linear-gradient(135deg, #7c3aed, #06b6d4)", ...style }
-      : style
-
     return (
       <Comp
         className={cn(baseStyles, variants[variant], sizes[size], className)}
-        style={defaultGradientStyle}
+        style={style}
         ref={ref}
         {...props}
       />

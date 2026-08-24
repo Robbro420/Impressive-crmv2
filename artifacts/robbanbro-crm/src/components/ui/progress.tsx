@@ -20,7 +20,7 @@ const Progress = React.forwardRef<
       className="h-full w-full flex-1 transition-all duration-700"
       style={{
         transform: `translateX(-${100 - (value || 0)}%)`,
-        background: 'linear-gradient(90deg, #7c3aed, #06b6d4)',
+        background: 'hsl(var(--primary))',
         borderRadius: '9999px',
       }}
     />

@@ -34,7 +34,7 @@ function TodosBadgeInactive() {
   const count = todos.filter((t) => !t.done).length
   if (count === 0) return null
   return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold" style={{background: "linear-gradient(135deg,#7c3aed,#06b6d4)", color: "#fff"}}>
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
       {count}
     </span>
   )
@@ -63,13 +63,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <aside className="hidden w-[240px] flex-col border-r border-border bg-white md:flex z-10 shrink-0" style={{boxShadow: "1px 0 20px rgba(124,58,237,0.04)"}}>
+      <aside className="hidden w-[240px] flex-col border-r border-border bg-card md:flex z-10 shrink-0">
         {/* Logo */}
         <div className="flex h-16 items-center px-5 border-b border-border">
           <Link href="/">
             <div className="flex items-center gap-2.5 cursor-pointer">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black shadow-md shrink-0" style={{background: "linear-gradient(135deg, #7c3aed, #06b6d4)"}}>
-                <span className="text-white font-black">I</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary text-sm font-black shadow-sm shrink-0">
+                <span className="text-primary-foreground font-black">I</span>
               </div>
               <span className="font-bold text-[17px] tracking-tight text-foreground">
                 Impressive<span className="gradient-text">CRM</span>
@@ -86,14 +86,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             return (
               <Link key={item.href} href={item.href}>
                 <div className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all cursor-pointer group",
-                  isActive 
-                    ? "text-white shadow-md" 
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors cursor-pointer group",
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                )}
-                style={isActive ? {background: "linear-gradient(135deg, #7c3aed, #06b6d4)", boxShadow: "0 4px 14px rgba(124,58,237,0.3)"} : {}}
-                >
-                  <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
+                )}>
+                  <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
                   {item.label}
                   {item.hasBadge && (isActive ? <TodosBadge /> : <TodosBadgeInactive />)}
                 </div>
@@ -123,8 +121,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="px-4 py-3 border-t border-border space-y-2">
           {user && (
             <div className="flex items-center gap-2.5 px-1">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                style={{background: "linear-gradient(135deg,#7c3aed,#06b6d4)"}}>
+              <div className="w-7 h-7 rounded-full flex items-center justify-center bg-primary text-[11px] font-bold text-primary-foreground shrink-0">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -145,7 +142,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile header */}
-        <header className="flex h-16 items-center gap-4 border-b bg-white px-6 md:hidden shrink-0">
+        <header className="flex h-16 items-center gap-4 border-b bg-card px-6 md:hidden shrink-0">
           <Menu className="h-6 w-6 text-muted-foreground" />
           <span className="font-bold text-[17px] tracking-tight">
             Impressive<span className="gradient-text">CRM</span>
