@@ -1,10 +1,12 @@
-import { useListGoals } from "@workspace/api-client-react"
+import { useListGoals, useGetSalesTrend } from "@workspace/api-client-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts"
 import { Target, Plus, TrendingUp, CalendarDays } from "lucide-react"
 
 export default function Goals() {
   const { data: goals, isLoading } = useListGoals()
+  const { data: trend } = useGetSalesTrend({ weeks: 8 })
 
   const getMetricLabel = (metric: string) => {
     switch (metric) {
@@ -32,6 +34,35 @@ export default function Goals() {
           Nytt Mål
         </Button>
       </div>
+
+      {/* Försäljningstrend — flyttad hit från dashboarden */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg font-black">Försäljningstrend</CardTitle>
+          <CardDescription className="font-medium">Omsättning de senaste 8 veckorna</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[240px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={trend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="goalsBarGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" />
+                  <stop offset="100%" stopColor="#38bdf8" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f4" />
+              <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" />
+              <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
+              <RechartsTooltip
+                cursor={{ fill: "rgba(37,99,235,0.06)" }}
+                contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 8px 24px rgba(20,20,43,0.08)", fontSize: "13px", fontFamily: "Inter" }}
+                formatter={(value: number) => [`${value.toLocaleString("sv-SE")} kr`, "Omsättning"]}
+              />
+              <Bar dataKey="revenue" radius={[6, 6, 0, 0]} maxBarSize={36} fill="url(#goalsBarGradient)" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
         {isLoading ? (

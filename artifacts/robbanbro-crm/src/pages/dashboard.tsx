@@ -1,12 +1,13 @@
 import { useState } from "react"
-import { 
-  useGetDashboardSummary, 
-  useGetSalesTrend,
-  useGetProductionQueue,
-  useGetActiveCampaigns,
+import {
+  useGetDashboardSummary,
   useUpdateOrder,
   useCreateTodo,
   useListOrders,
+  useListGoals,
+  useCreateGoal,
+  useUpdateGoal,
+  getListGoalsQueryKey,
   getGetProductionQueueQueryKey,
   getGetActiveCampaignsQueryKey,
   getGetDashboardSummaryQueryKey,
@@ -15,13 +16,13 @@ import {
 } from "@workspace/api-client-react"
 import type { EnrichedOrder } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts"
-import { TrendingUp, Package, Megaphone, ArrowRight, GripVertical, CheckCircle2, X, Sparkles, Loader2, PhoneOutgoing, FileText, Rocket } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Package, Megaphone, ArrowRight, GripVertical, CheckCircle2, X, Sparkles, Loader2, PhoneOutgoing, FileText, Rocket } from "lucide-react"
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
 import { CustomerQuickView } from "@/components/customer-quick-view"
 import { DailyNotes } from "@/components/daily-notes"
+import { SalesGoalCard } from "@/components/sales-goal-card"
 import {
   DndContext,
   DragEndEvent,
@@ -311,7 +312,6 @@ function DroppableColumn({
 export default function Dashboard() {
   const queryClient = useQueryClient()
   const { data: summary, isLoading: loadingSummary } = useGetDashboardSummary()
-  const { data: trend, isLoading: loadingTrend } = useGetSalesTrend({ weeks: 8 })
   const { data: allOrdersRaw = [], isLoading: loadingOrders } = useListOrders()
   const allOrders = allOrdersRaw as unknown as EnrichedOrder[]
   const byStage = (key: string) => allOrders.filter((o) => o.status === key)
@@ -319,6 +319,39 @@ export default function Dashboard() {
     byStage(key).reduce((acc, o) => acc + (o.amount ? Number(o.amount) : 0), 0)
   const updateOrder = useUpdateOrder()
   const createTodo = useCreateTodo()
+
+  // ── Försäljningsmål (vecka + månad) ────────────────────────────────────────
+  const { data: goals = [] } = useListGoals()
+  const createGoal = useCreateGoal()
+  const updateGoal = useUpdateGoal()
+
+  const weekGoal = goals.find((g) => /veck|week/i.test(g.period) || /veck|week/i.test(g.name))
+  const monthGoal = goals.find((g) => /månad|month/i.test(g.period) || /månad|month/i.test(g.name))
+
+  const invalidateGoals = () =>
+    queryClient.invalidateQueries({ queryKey: getListGoalsQueryKey() })
+
+  const saveGoalTarget = (goal: typeof weekGoal, defaults: { name: string; period: string }) =>
+    (target: number) => {
+      if (goal) {
+        updateGoal.mutate({ id: goal.id, data: { target } }, { onSuccess: invalidateGoals })
+      } else {
+        createGoal.mutate(
+          { data: { name: defaults.name, metric: "revenue", target, period: defaults.period } },
+          { onSuccess: invalidateGoals },
+        )
+      }
+    }
+
+  // Månadens omsättning — live från ordrarna (orderdatum i innevarande månad)
+  const now = new Date()
+  const monthRevenue = allOrders
+    .filter((o) => {
+      if (o.status === "avbokad") return false
+      const d = new Date(o.orderDate)
+      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+    })
+    .reduce((acc, o) => acc + (o.amount ? Number(o.amount) : 0), 0)
 
   const [activeOrder, setActiveOrder] = useState<EnrichedOrder | null>(null)
   const [quickViewCustomerId, setQuickViewCustomerId] = useState<number | null>(null)
@@ -397,7 +430,7 @@ export default function Dashboard() {
     setUpsellOrder(null)
   }
 
-  const isLoading = loadingSummary || loadingTrend
+  const isLoading = loadingSummary
 
   if (isLoading) {
     return (
@@ -426,36 +459,39 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-1 text-sm font-medium">Din verksamhet i siffror. Välkommen tillbaka.</p>
       </div>
 
-      {/* Dagens anteckningar */}
+      {/* Dagens anteckningar — flytande knapp + sidopanel */}
       <DailyNotes />
 
-      {/* KPI Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-semibold text-muted-foreground mb-3">Veckans Omsättning</p>
-                <div className="text-3xl font-black tracking-tight">
-                  {summary?.thisWeekRevenue?.toLocaleString("sv-SE") || 0}{" "}
-                  <span className="text-lg font-bold text-muted-foreground">kr</span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  <span className={cn("font-bold", summary?.revenueChangePercent && summary.revenueChangePercent > 0 ? "text-emerald-600" : "text-rose-500")}>
-                    {summary?.revenueChangePercent && summary.revenueChangePercent > 0 ? "+" : ""}{summary?.revenueChangePercent || 0}%
-                  </span>{" "}jämfört med förra veckan
-                </p>
-              </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 gradient-bg shadow-md shadow-primary/20">
-                <TrendingUp className="h-5 w-5 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* KPI-rad — 4 kort: vecko- och månadsmål (redigerbara) + pipeline-lägen */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <SalesGoalCard
+          periodLabel="Veckomål"
+          title="Veckans försäljning"
+          current={summary?.thisWeekRevenue ?? 0}
+          target={weekGoal?.target ?? null}
+          subtitle={
+            <span>
+              <span className={cn("font-bold", summary?.revenueChangePercent && summary.revenueChangePercent > 0 ? "text-emerald-600" : "text-rose-500")}>
+                {summary?.revenueChangePercent && summary.revenueChangePercent > 0 ? "+" : ""}{summary?.revenueChangePercent || 0}%
+              </span>{" "}vs förra veckan
+            </span>
+          }
+          onSaveTarget={saveGoalTarget(weekGoal, { name: "Veckoförsäljning", period: "weekly" })}
+          saving={createGoal.isPending || updateGoal.isPending}
+        />
+
+        <SalesGoalCard
+          periodLabel="Månadsmål"
+          title="Månadens försäljning"
+          current={monthRevenue}
+          target={monthGoal?.target ?? null}
+          onSaveTarget={saveGoalTarget(monthGoal, { name: "Månadsförsäljning", period: "monthly" })}
+          saving={createGoal.isPending || updateGoal.isPending}
+        />
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between h-full">
               <div>
                 <p className="text-sm font-semibold text-muted-foreground mb-3">Annonshantering</p>
                 <div className="text-3xl font-black tracking-tight">{loadingOrders ? "–" : byStage("produktion").length}</div>
@@ -470,7 +506,7 @@ export default function Dashboard() {
 
         <Card>
           <CardContent className="p-6">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between h-full">
               <div>
                 <p className="text-sm font-semibold text-muted-foreground mb-3">Kampanjer live</p>
                 <div className="text-3xl font-black tracking-tight">{loadingOrders ? "–" : byStage("aktiv").length}</div>
@@ -483,35 +519,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Sales chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg font-black">Försäljningstrend</CardTitle>
-          <CardDescription className="font-medium">Omsättning de senaste 8 veckorna</CardDescription>
-        </CardHeader>
-        <CardContent className="h-[240px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={trend} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2563eb" />
-                  <stop offset="100%" stopColor="#38bdf8" />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f4" />
-              <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" />
-              <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-              <RechartsTooltip
-                cursor={{ fill: "rgba(80,89,240,0.06)" }}
-                contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 8px 24px rgba(20,20,43,0.08)", fontSize: "13px", fontFamily: "Inter" }}
-                formatter={(value: number) => [`${value.toLocaleString("sv-SE")} kr`, "Omsättning"]}
-              />
-              <Bar dataKey="revenue" radius={[6, 6, 0, 0]} maxBarSize={36} fill="url(#barGradient)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
 
       {/* Kanban board */}
       <div>

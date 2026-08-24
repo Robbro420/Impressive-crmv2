@@ -1,16 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { NotebookPen, ChevronDown, ChevronUp, Maximize2, Minimize2, Loader2, Check } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { NotebookPen, X, Loader2, Check } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 
 /**
- * Dagligt noteringsblock på dashboarden.
- * Sparar per dag i den interna kalendern (samma data som kalendern i menyn),
- * autosparar medan man skriver, och kan fällas ihop / förstoras.
+ * Dagens anteckningar — flytande knapp nere till höger som öppnar en hög
+ * sidopanel. Sparar per dag i den interna kalendern (calendar_logs) och
+ * autosparar medan man skriver.
  */
-
-type Mode = "collapsed" | "normal" | "large"
-const MODE_KEY = "dailyNotesMode"
 
 function getBaseUrl() {
   return (import.meta.env.BASE_URL as string).replace(/\/$/, "")
@@ -30,10 +26,7 @@ function todayLabel() {
 
 export function DailyNotes() {
   const { user } = useAuth()
-  const [mode, setMode] = useState<Mode>(() => {
-    const saved = localStorage.getItem(MODE_KEY)
-    return saved === "collapsed" || saved === "large" ? saved : "normal"
-  })
+  const [open, setOpen] = useState(false)
   const [content, setContent] = useState("")
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -43,10 +36,6 @@ export function DailyNotes() {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestContent = useRef("")
   const lastSavedContent = useRef("")
-
-  useEffect(() => {
-    localStorage.setItem(MODE_KEY, mode)
-  }, [mode])
 
   // Load today's note
   useEffect(() => {
@@ -97,77 +86,69 @@ export function DailyNotes() {
     }
   }, [persist])
 
-  const collapsed = mode === "collapsed"
-  const large = mode === "large"
+  const hasContent = content.trim().length > 0
 
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-      {/* Header */}
+    <>
+      {/* Flytande knapp */}
       <button
-        type="button"
-        onClick={() => setMode(collapsed ? "normal" : "collapsed")}
-        className="flex w-full items-center gap-3 px-5 py-3.5 text-left hover:bg-secondary/40 transition-colors"
+        onClick={() => setOpen(true)}
+        title="Dagens anteckningar"
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full gradient-bg text-white shadow-xl shadow-primary/30 transition-transform hover:scale-105 active:scale-95"
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-          <NotebookPen className="h-4 w-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold leading-tight">Dagens anteckningar</p>
-          <p className="text-xs text-muted-foreground capitalize">{todayLabel()}</p>
-        </div>
-        {collapsed && content.trim() && (
-          <span className="hidden sm:block max-w-[45%] truncate text-xs text-muted-foreground italic">
-            {content.trim().split("\n")[0]}
-          </span>
+        <NotebookPen className="h-6 w-6" />
+        {hasContent && (
+          <span className="absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-[#22d3ee] border-2 border-white" />
         )}
-        <span className="flex items-center gap-1.5 text-muted-foreground shrink-0">
-          {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-          {saved && !saving && <Check className="h-3.5 w-3.5 text-emerald-600" />}
-          {!collapsed && (
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation()
-                setMode(large ? "normal" : "large")
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.stopPropagation()
-                  setMode(large ? "normal" : "large")
-                }
-              }}
-              className="p-1 rounded hover:bg-secondary hover:text-foreground"
-              title={large ? "Förminska" : "Förstora"}
-            >
-              {large ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </span>
-          )}
-          <span className="p-1" title={collapsed ? "Fäll ut" : "Fäll ihop"}>
-            {collapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-          </span>
-        </span>
       </button>
 
-      {/* Body */}
-      {!collapsed && (
-        <div className="border-t border-border px-5 py-4">
-          <textarea
-            value={content}
-            onChange={(e) => handleChange(e.target.value)}
-            onBlur={persist}
-            disabled={!loaded}
-            placeholder={loaded ? "Att göra idag, saker att komma ihåg…" : "Laddar…"}
-            className={cn(
-              "w-full resize-none rounded-lg border border-input bg-background px-3.5 py-3 text-sm leading-relaxed outline-none transition-[height] placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/15",
-              large ? "h-[55vh]" : "h-36",
-            )}
+      {/* Sidopanel */}
+      {open && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-[2px] animate-in fade-in duration-200"
+            onClick={() => { void persist(); setOpen(false) }}
           />
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Sparas automatiskt · en anteckning per dag · äldre dagar hittar du i kalendern i menyn
-          </p>
-        </div>
+          <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[420px] flex-col bg-card border-l border-border shadow-2xl animate-in slide-in-from-right duration-300">
+            {/* Header */}
+            <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-bg text-white shrink-0">
+                <NotebookPen className="h-4.5 w-4.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-extrabold leading-tight">Dagens anteckningar</p>
+                <p className="text-xs text-muted-foreground capitalize">{todayLabel()}</p>
+              </div>
+              <span className="flex items-center gap-2 text-muted-foreground">
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {saved && !saving && <Check className="h-4 w-4 text-emerald-600" />}
+                <button
+                  onClick={() => { void persist(); setOpen(false) }}
+                  className="p-1.5 rounded-lg hover:bg-secondary hover:text-foreground transition-colors"
+                  title="Stäng"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </span>
+            </div>
+
+            {/* Textarea — fyller hela höjden */}
+            <textarea
+              value={content}
+              onChange={(e) => handleChange(e.target.value)}
+              onBlur={persist}
+              disabled={!loaded}
+              autoFocus
+              placeholder={loaded ? "Att göra idag, saker att komma ihåg…" : "Laddar…"}
+              className="flex-1 w-full resize-none bg-transparent px-5 py-4 text-sm leading-relaxed outline-none placeholder:text-muted-foreground/50"
+            />
+
+            <p className="border-t border-border px-5 py-3 text-[11px] text-muted-foreground">
+              Sparas automatiskt · en anteckning per dag · äldre dagar hittar du i kalendern i menyn
+            </p>
+          </div>
+        </>
       )}
-    </div>
+    </>
   )
 }
