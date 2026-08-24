@@ -141340,6 +141340,14 @@ router4.post("/emails/webhook", async (req, res) => {
       }
       console.log(`[webhook] Parsed order data (${usedAI ? "AI" : "regex"}):`, orderData);
       if (!orderData.customerName && !orderData.orderNumber) continue;
+      if (orderData.orderNumber) {
+        const [existing] = await db.select({ id: ordersTable.id }).from(ordersTable).where(eq(ordersTable.orderNumber, orderData.orderNumber)).limit(1);
+        if (existing) {
+          console.log(`[webhook] Order #${orderData.orderNumber} finns redan \u2014 hoppar \xF6ver`);
+          res.json({ ok: true, duplicate: true, orderNumber: orderData.orderNumber });
+          return;
+        }
+      }
       let customer = await matchOrCreateCustomer(orderData);
       if (!customer) {
         const [emailMatch] = await db.select().from(customersTable).where(eq(customersTable.email, fromEmail));

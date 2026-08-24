@@ -12,10 +12,13 @@
     "@neondatabase/serverless": "^1.1.0",
     "@workspace/db": "workspace:*",
     "bcryptjs": "^3.0.3",
+    "imapflow": "^1.7.2",
+    "mailparser": "^3.9.15",
     "ws": "^8.21.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
+    "@types/mailparser": "^3.4.6",
     "@types/node": "catalog:",
     "@types/ws": "^8.18.1",
     "pdf-lib": "^1.17.1",

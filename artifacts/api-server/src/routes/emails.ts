@@ -451,6 +451,21 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
 
       if (!orderData.customerName && !orderData.orderNumber) continue;
 
+      // Dubblettskydd: samma ordernummer importeras aldrig två gånger
+      // (skyddar mot Postmark-omsändningar och historiska batch-importer)
+      if (orderData.orderNumber) {
+        const [existing] = await db
+          .select({ id: ordersTable.id })
+          .from(ordersTable)
+          .where(eq(ordersTable.orderNumber, orderData.orderNumber))
+          .limit(1);
+        if (existing) {
+          console.log(`[webhook] Order #${orderData.orderNumber} finns redan — hoppar över`);
+          res.json({ ok: true, duplicate: true, orderNumber: orderData.orderNumber });
+          return;
+        }
+      }
+
       // ── 3. Match or create customer ──────────────────────────────────────
       let customer = await matchOrCreateCustomer(orderData);
 
