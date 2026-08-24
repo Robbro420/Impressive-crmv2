@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -50,25 +50,26 @@
   --card-foreground: 228 30% 10%;
   --popover: 0 0% 100%;
   --popover-foreground: 228 30% 10%;
-  --primary: 235 78% 60%;        /* indigo-blå #4a58ee */
+  --primary: 221 83% 53%;        /* Impressive-blå #2563eb */
   --primary-foreground: 0 0% 100%;
-  --secondary: 226 70% 96%;      /* ljus blåtonad platta */
-  --secondary-foreground: 232 50% 34%;
+  --secondary: 221 70% 96%;      /* ljus blåtonad platta */
+  --secondary-foreground: 224 55% 32%;
   --muted: 222 30% 95%;
   --muted-foreground: 227 12% 44%;
-  --accent: 226 70% 96%;
-  --accent-foreground: 232 50% 34%;
+  --accent: 221 70% 96%;
+  --accent-foreground: 224 55% 32%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
   --border: 224 30% 90%;
   --input: 224 30% 87%;
-  --ring: 235 78% 60%;
+  --ring: 221 83% 53%;
   --radius: 0.75rem;
 
-  /* Varumärkesgradient — knappar, aktiva element, accenter */
-  --brand-from: 239 82% 62%;     /* #5059f0 */
-  --brand-to: 217 92% 58%;       /* #2f7ef8 */
-  --brand-gradient: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
+  /* Varumärkesgradienter — exakt samma som impressivewebb.se */
+  --brand-from: 244 75% 59%;     /* #4f46e5 */
+  --brand-to: 187 85% 53%;       /* #22d3ee */
+  --brand-gradient: linear-gradient(135deg, #4f46e5, #2563eb 50%, #22d3ee);
+  --brand-text-gradient: linear-gradient(90deg, #1d4ed8, #3b82f6 45%, #22d3ee);
 
   /* Statusfärger — KPI-ikoner, badges, progress */
   --success: 160 84% 32%;
@@ -82,7 +83,7 @@
   --card-foreground: 220 30% 96%;
   --popover: 232 26% 11%;
   --popover-foreground: 220 30% 96%;
-  --primary: 235 82% 66%;
+  --primary: 217 91% 65%;
   --primary-foreground: 0 0% 100%;
   --secondary: 233 24% 16%;
   --secondary-foreground: 220 30% 96%;
@@ -94,7 +95,7 @@
   --destructive-foreground: 0 0% 98%;
   --border: 233 20% 19%;
   --input: 233 20% 22%;
-  --ring: 235 82% 66%;
+  --ring: 217 91% 65%;
 
   --success: 160 70% 42%;
   --warning: 28 90% 55%;
@@ -115,14 +116,15 @@
     font-feature-settings: 'cv11', 'ss01';
   }
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 800;
+    font-family: 'Sora', 'Inter', ui-sans-serif, sans-serif;
+    font-weight: 700;
     letter-spacing: -0.03em;
   }
 }
 
 /* Varumärkesaccenter */
 .gradient-text {
-  background: var(--brand-gradient);
+  background: var(--brand-text-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

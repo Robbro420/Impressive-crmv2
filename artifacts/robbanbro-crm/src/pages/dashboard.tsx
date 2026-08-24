@@ -494,8 +494,8 @@ export default function Dashboard() {
           <svg width="0" height="0">
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#5059f0" />
-                <stop offset="100%" stopColor="#2f7ef8" />
+                <stop offset="0%" stopColor="#2563eb" />
+                <stop offset="100%" stopColor="#38bdf8" />
               </linearGradient>
             </defs>
           </svg>

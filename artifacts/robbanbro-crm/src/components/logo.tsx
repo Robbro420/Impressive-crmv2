@@ -1,20 +1,21 @@
 /**
- * Impressive Media-märket: tre stigande staplar med cyan punkt.
- * Ritad som inline-SVG så den skalar skarpt överallt.
+ * Impressive-märket — exakt samma SVG som impressivewebb.se:
+ * tre stigande staplar i blå gradient med cyan punkt.
  */
 export function ImpressiveLogo({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden>
+    <svg viewBox="0 0 256 216" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden>
       <defs>
-        <linearGradient id="impressive-bar" x1="0" y1="48" x2="48" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#7c6cf5" />
-          <stop offset="100%" stopColor="#3f8bf7" />
+        <linearGradient id="impressive-logo-g" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stopColor="#1d4ed8" />
+          <stop offset="0.5" stopColor="#3b82f6" />
+          <stop offset="1" stopColor="#22d3ee" />
         </linearGradient>
       </defs>
-      <rect x="5" y="29" width="9" height="15" rx="4.5" fill="url(#impressive-bar)" />
-      <rect x="19.5" y="20" width="9" height="24" rx="4.5" fill="url(#impressive-bar)" />
-      <rect x="34" y="12" width="9" height="32" rx="4.5" fill="url(#impressive-bar)" />
-      <circle cx="38.5" cy="5.5" r="4.5" fill="#2fd4f0" />
+      <rect x="44" y="128" width="38" height="86" rx="19" fill="url(#impressive-logo-g)" />
+      <rect x="110" y="85" width="38" height="129" rx="19" fill="url(#impressive-logo-g)" />
+      <rect x="176" y="42" width="38" height="172" rx="19" fill="url(#impressive-logo-g)" />
+      <circle cx="195" cy="16" r="15" fill="#22d3ee" />
     </svg>
   )
 }
