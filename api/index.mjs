@@ -141033,7 +141033,7 @@ Regler:
 - F\xE4lt du inte hittar s\xE4tts till null.`;
 async function extractOrderWithAI(text2) {
   const response = await getAi().models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3.6-flash",
     contents: `${EXTRACTION_PROMPT}
 
 --- TEXT ATT TOLKA ---

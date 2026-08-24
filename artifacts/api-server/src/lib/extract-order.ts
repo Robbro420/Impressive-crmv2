@@ -88,7 +88,7 @@ export { hasGemini };
  */
 export async function extractOrderWithAI(text: string): Promise<OrderExtraction> {
   const response = await getAi().models.generateContent({
-    model: "gemini-2.5-flash",
+    model: "gemini-3.6-flash",
     contents: `${EXTRACTION_PROMPT}\n\n--- TEXT ATT TOLKA ---\n${text.slice(0, 30000)}`,
     config: { responseMimeType: "application/json" },
   });
