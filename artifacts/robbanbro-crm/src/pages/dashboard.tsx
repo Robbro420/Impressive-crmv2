@@ -497,7 +497,7 @@ export default function Dashboard() {
                 <div className="text-3xl font-black tracking-tight">{loadingOrders ? "–" : byStage("produktion").length}</div>
                 <p className="text-xs text-muted-foreground mt-2 font-medium">Ordrar som väntar på produktion</p>
               </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--warning))" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 gradient-warning shadow-md shadow-orange-500/20">
                 <Package className="h-5 w-5 text-white" />
               </div>
             </div>
@@ -512,7 +512,7 @@ export default function Dashboard() {
                 <div className="text-3xl font-black tracking-tight">{loadingOrders ? "–" : byStage("aktiv").length}</div>
                 <p className="text-xs text-muted-foreground mt-2 font-medium">Kampanjer som är igång just nu</p>
               </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--success))" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 gradient-success shadow-md shadow-emerald-500/20">
                 <Megaphone className="h-5 w-5 text-white" />
               </div>
             </div>

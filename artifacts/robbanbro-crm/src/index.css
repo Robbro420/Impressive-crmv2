@@ -133,3 +133,11 @@
 .gradient-bg {
   background: var(--brand-gradient);
 }
+
+.gradient-success {
+  background: linear-gradient(135deg, #047857, #10b981 55%, #2dd4bf);
+}
+
+.gradient-warning {
+  background: linear-gradient(135deg, #ea580c, #f97316 55%, #fbbf24);
+}
