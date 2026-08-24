@@ -1,0 +1,59 @@
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cn } from "@/lib/utils"
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link"
+  size?: "default" | "sm" | "lg" | "icon"
+}
+
+const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+
+const variants = {
+  default: "text-white shadow-md hover:opacity-90 active:scale-[0.98]",
+  destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
+  outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+  secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+  ghost: "hover:bg-accent hover:text-accent-foreground rounded-lg",
+  link: "text-primary underline-offset-4 hover:underline rounded-none"
+}
+
+const sizes = {
+  default: "h-10 px-5 py-2",
+  sm: "h-8 px-3 text-xs",
+  lg: "h-11 px-8 text-base",
+  icon: "h-10 w-10 rounded-xl"
+}
+
+function buttonVariants(opts?: {
+  variant?: keyof typeof variants
+  size?: keyof typeof sizes
+  className?: string
+}) {
+  const { variant = "default", size = "default", className } = opts ?? {}
+  return cn(baseStyles, variants[variant], sizes[size], className)
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = "default", size = "default", asChild = false, style, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+
+    const defaultGradientStyle = variant === "default" 
+      ? { background: "linear-gradient(135deg, #7c3aed, #06b6d4)", ...style }
+      : style
+
+    return (
+      <Comp
+        className={cn(baseStyles, variants[variant], sizes[size], className)}
+        style={defaultGradientStyle}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button, buttonVariants }

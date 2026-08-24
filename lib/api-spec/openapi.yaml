@@ -1,0 +1,1297 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Robbanbro CRM API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: customers
+    description: Customer management
+  - name: orders
+    description: Order management
+  - name: emails
+    description: Postmark email inbox
+  - name: goals
+    description: Sales goals
+  - name: dashboard
+    description: Dashboard metrics
+  - name: cases
+  - name: todos
+    description: To-do list
+  - name: google
+    description: Google services (Gmail)
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── CUSTOMERS ──────────────────────────────────────────────────────────────
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: List all customers
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Create a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get a customer by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Update a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    delete:
+      operationId: deleteCustomer
+      tags: [customers]
+      summary: Delete a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  /customers/{id}/timeline:
+    get:
+      operationId: getCustomerTimeline
+      tags: [customers]
+      summary: Get customer activity timeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Timeline events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimelineEvent"
+
+  # ── ORDERS ─────────────────────────────────────────────────────────────────
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List all orders
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: number
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create an order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Created order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get an order by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateOrder
+      tags: [orders]
+      summary: Update an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+    delete:
+      operationId: deleteOrder
+      tags: [orders]
+      summary: Delete an order
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── EMAILS ─────────────────────────────────────────────────────────────────
+  /emails:
+    get:
+      operationId: listEmails
+      tags: [emails]
+      summary: List all incoming emails (Postmark inbox)
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: number
+        - name: processed
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of emails
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Email"
+
+  /emails/{id}:
+    get:
+      operationId: getEmail
+      tags: [emails]
+      summary: Get an email by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Email"
+
+  /emails/{id}/link-customer:
+    post:
+      operationId: linkEmailToCustomer
+      tags: [emails]
+      summary: Link an email to a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LinkEmailInput"
+      responses:
+        "200":
+          description: Updated email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Email"
+
+  /emails/webhook:
+    post:
+      operationId: receiveEmailWebhook
+      tags: [emails]
+      summary: Postmark inbound email webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostmarkWebhookInput"
+      responses:
+        "200":
+          description: Received
+
+  # ── GOALS ──────────────────────────────────────────────────────────────────
+  /goals:
+    get:
+      operationId: listGoals
+      tags: [goals]
+      summary: List all goals
+      responses:
+        "200":
+          description: List of goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Goal"
+    post:
+      operationId: createGoal
+      tags: [goals]
+      summary: Create a goal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalInput"
+      responses:
+        "201":
+          description: Created goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+
+  /goals/{id}:
+    patch:
+      operationId: updateGoal
+      tags: [goals]
+      summary: Update a goal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalUpdate"
+      responses:
+        "200":
+          description: Updated goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+    delete:
+      operationId: deleteGoal
+      tags: [goals]
+      summary: Delete a goal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── TODOS ──────────────────────────────────────────────────────────────────
+  /cases:
+    get:
+      operationId: listCases
+      tags: [cases]
+      summary: List all cases (ärenden)
+      parameters:
+        - name: customerId
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [öppet, pågående, löst]
+      responses:
+        "200":
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Case"
+    post:
+      operationId: createCase
+      tags: [cases]
+      summary: Create a case
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseInput"
+      responses:
+        "201":
+          description: Created case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+
+  /cases/{id}:
+    patch:
+      operationId: updateCase
+      tags: [cases]
+      summary: Update a case (status, title, description)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseUpdate"
+      responses:
+        "200":
+          description: Updated case
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+    delete:
+      operationId: deleteCase
+      tags: [cases]
+      summary: Delete a case
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  /todos:
+    get:
+      operationId: listTodos
+      tags: [todos]
+      summary: List all to-dos
+      responses:
+        "200":
+          description: List of to-dos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Todo"
+    post:
+      operationId: createTodo
+      tags: [todos]
+      summary: Create a to-do
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoInput"
+      responses:
+        "201":
+          description: Created to-do
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+
+  /todos/{id}/send-email:
+    post:
+      operationId: sendTodoEmail
+      tags: [todos]
+      summary: Send a todo as an email to a colleague
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendTodoEmailInput"
+      responses:
+        "200":
+          description: Email sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendTodoEmailResult"
+
+  /todos/{id}:
+    patch:
+      operationId: updateTodo
+      tags: [todos]
+      summary: Update a to-do (toggle done, edit title, set due date)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TodoUpdate"
+      responses:
+        "200":
+          description: Updated to-do
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+    delete:
+      operationId: deleteTodo
+      tags: [todos]
+      summary: Delete a to-do
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  # ── DASHBOARD ──────────────────────────────────────────────────────────────
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard KPIs and summary stats
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/sales-trend:
+    get:
+      operationId: getSalesTrend
+      tags: [dashboard]
+      summary: Get weekly sales trend data
+      parameters:
+        - name: weeks
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Weekly sales trend
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SalesWeek"
+
+  /dashboard/production-queue:
+    get:
+      operationId: getProductionQueue
+      tags: [dashboard]
+      summary: Get orders currently awaiting production
+      responses:
+        "200":
+          description: Orders in production queue
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnrichedOrder"
+
+  /dashboard/active-campaigns:
+    get:
+      operationId: getActiveCampaigns
+      tags: [dashboard]
+      summary: Get orders currently marked as active campaigns
+      responses:
+        "200":
+          description: Active campaign orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnrichedOrder"
+
+  # ── GOOGLE / GMAIL ─────────────────────────────────────────────────────────
+  /google/gmail/status:
+    get:
+      operationId: getGmailStatus
+      tags: [google]
+      summary: Check whether the Gmail connection is live
+      responses:
+        "200":
+          description: Gmail connection status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GmailStatus"
+
+  /google/gmail/sync:
+    post:
+      operationId: syncGmail
+      tags: [google]
+      summary: Fetch recent Gmail inbox messages into the CRM inbox
+      responses:
+        "200":
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GmailSyncResult"
+        "502":
+          description: Gmail API error
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error:
+                    type: string
+
+components:
+  schemas:
+    GmailStatus:
+      type: object
+      required: [connected]
+      properties:
+        connected:
+          type: boolean
+        emailAddress:
+          type: string
+          nullable: true
+
+    GmailSyncResult:
+      type: object
+      required: [fetched, imported, linked]
+      properties:
+        fetched:
+          type: number
+        imported:
+          type: number
+        linked:
+          type: number
+
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    Customer:
+      type: object
+      required: [id, name, email, category, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        company:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        postalCode:
+          type: ["string", "null"]
+        category:
+          type: string
+          description: "e.g. privat, foretag, grossist, ovrigt"
+        status:
+          type: string
+          description: "aktiv, inaktiv, prospect"
+        customerNumber:
+          type: ["string", "null"]
+          description: Internal customer number (from order confirmation PDF)
+        tags:
+          type: ["string", "null"]
+          description: Comma-separated tags
+        notes:
+          type: ["string", "null"]
+        totalOrders:
+          type: ["number", "null"]
+        totalValue:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CustomerInput:
+      type: object
+      required: [name, email, category]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+        customerNumber:
+          type: string
+        tags:
+          type: string
+        notes:
+          type: string
+
+    CustomerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        company:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+        postalCode:
+          type: string
+        category:
+          type: string
+        status:
+          type: string
+        customerNumber:
+          type: string
+        tags:
+          type: string
+        notes:
+          type: string
+
+    Order:
+      type: object
+      required: [id, customerId, status, orderDate, createdAt, updatedAt]
+      properties:
+        id:
+          type: number
+        customerId:
+          type: number
+        customerName:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+        orderText:
+          type: ["string", "null"]
+          description: Full order text/email body
+        orderNumber:
+          type: ["string", "null"]
+          description: Order number from order confirmation PDF
+        status:
+          type: string
+          description: "ny, produktion, aktiv, klar, levererad, avbokad, uppföljning"
+        amount:
+          type: ["number", "null"]
+        deliveryDate:
+          type: ["string", "null"]
+          format: date
+        campaignStart:
+          type: ["string", "null"]
+          description: Campaign start date
+        campaignEnd:
+          type: ["string", "null"]
+          description: Campaign end date — when passed auto-transitions to uppföljning
+        notes:
+          type: ["string", "null"]
+        emailId:
+          type: ["number", "null"]
+          description: Source email ID if created from email
+        orderDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    OrderInput:
+      type: object
+      required: [customerId, status, orderDate]
+      properties:
+        customerId:
+          type: number
+        subject:
+          type: string
+        orderText:
+          type: string
+        orderNumber:
+          type: string
+        status:
+          type: string
+        amount:
+          type: number
+        deliveryDate:
+          type: string
+          format: date
+        campaignStart:
+          type: string
+          description: Campaign start date
+        campaignEnd:
+          type: string
+          description: Campaign end date
+        notes:
+          type: string
+        emailId:
+          type: number
+        orderDate:
+          type: string
+          format: date-time
+
+    OrderUpdate:
+      type: object
+      properties:
+        subject:
+          type: string
+        orderText:
+          type: string
+        status:
+          type: string
+        amount:
+          type: number
+        deliveryDate:
+          type: string
+          format: date
+        campaignStart:
+          type: string
+          description: Campaign start date
+        campaignEnd:
+          type: string
+          description: Campaign end date
+        notes:
+          type: string
+
+    Email:
+      type: object
+      required: [id, fromEmail, subject, receivedAt, processed, createdAt]
+      properties:
+        id:
+          type: number
+        fromEmail:
+          type: string
+        fromName:
+          type: ["string", "null"]
+        subject:
+          type: string
+        bodyText:
+          type: ["string", "null"]
+        bodyHtml:
+          type: ["string", "null"]
+        customerId:
+          type: ["number", "null"]
+        customerName:
+          type: ["string", "null"]
+        processed:
+          type: boolean
+        receivedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    LinkEmailInput:
+      type: object
+      required: [customerId]
+      properties:
+        customerId:
+          type: number
+        createOrder:
+          type: boolean
+          description: Also create an order from this email
+
+    PostmarkWebhookInput:
+      type: object
+      required: [From, Subject]
+      properties:
+        From:
+          type: string
+        FromName:
+          type: string
+        Subject:
+          type: string
+        TextBody:
+          type: string
+        HtmlBody:
+          type: string
+        Date:
+          type: string
+        Attachments:
+          type: array
+          items:
+            type: object
+            properties:
+              Name:
+                type: string
+              Content:
+                type: string
+              ContentType:
+                type: string
+              ContentLength:
+                type: number
+
+    Goal:
+      type: object
+      required: [id, name, metric, target, period, createdAt]
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        metric:
+          type: string
+          description: "orders, revenue, new_customers"
+        target:
+          type: number
+        current:
+          type: number
+        period:
+          type: string
+          description: "weekly, monthly, quarterly"
+        createdAt:
+          type: string
+          format: date-time
+
+    GoalInput:
+      type: object
+      required: [name, metric, target, period]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        metric:
+          type: string
+        target:
+          type: number
+        period:
+          type: string
+
+    GoalUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        target:
+          type: number
+        current:
+          type: number
+        period:
+          type: string
+
+    TimelineEvent:
+      type: object
+      required: [id, customerId, type, description, occurredAt]
+      properties:
+        id:
+          type: number
+        customerId:
+          type: number
+        type:
+          type: string
+          description: "order_created, email_received, note_added, status_changed"
+        description:
+          type: string
+        referenceId:
+          type: ["number", "null"]
+        occurredAt:
+          type: string
+          format: date-time
+
+    DashboardSummary:
+      type: object
+      required: [totalCustomers, totalOrders, awaitingProduction, activeCampaigns, thisWeekRevenue, lastWeekRevenue, revenueChangePercent, newCustomersThisMonth]
+      properties:
+        totalCustomers:
+          type: number
+        totalOrders:
+          type: number
+        awaitingProduction:
+          type: number
+        activeCampaigns:
+          type: number
+        thisWeekRevenue:
+          type: number
+        lastWeekRevenue:
+          type: number
+        revenueChangePercent:
+          type: number
+        newCustomersThisMonth:
+          type: number
+        completedOrdersThisWeek:
+          type: number
+
+    EnrichedOrder:
+      type: object
+      required: [id, customerId, status, orderDate, createdAt, updatedAt]
+      properties:
+        id:
+          type: number
+        customerId:
+          type: number
+        customerName:
+          type: ["string", "null"]
+        subject:
+          type: ["string", "null"]
+        orderText:
+          type: ["string", "null"]
+        status:
+          type: string
+        amount:
+          type: ["string", "null"]
+        deliveryDate:
+          type: ["string", "null"]
+        campaignStart:
+          type: ["string", "null"]
+        campaignEnd:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        orderNumber:
+          type: ["string", "null"]
+        emailId:
+          type: ["number", "null"]
+        orderDate:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Case:
+      type: object
+      required: [id, title, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          description: "öppet | pågående | löst"
+        customerId:
+          type: ["number", "null"]
+        customerName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CaseInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        status:
+          type: string
+          enum: [öppet, pågående, löst]
+        customerId:
+          type: number
+
+    CaseUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [öppet, pågående, löst]
+        customerId:
+          type: ["number", "null"]
+
+    Todo:
+      type: object
+      required: [id, title, done, createdAt, updatedAt]
+      properties:
+        id:
+          type: number
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        done:
+          type: boolean
+        dueDate:
+          type: ["string", "null"]
+          format: date-time
+        customerId:
+          type: ["number", "null"]
+        notifyEmails:
+          type: ["string", "null"]
+          description: Comma-separated email addresses to invite via Google Calendar
+        contactName:
+          type: ["string", "null"]
+        contactPhone:
+          type: ["string", "null"]
+        contactEmail:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TodoInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        customerId:
+          type: number
+        notifyEmails:
+          type: string
+          description: Comma-separated email addresses to invite via Google Calendar
+        contactName:
+          type: string
+        contactPhone:
+          type: string
+        contactEmail:
+          type: string
+
+    TodoUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        done:
+          type: boolean
+        dueDate:
+          type: string
+          format: date-time
+        customerId:
+          type: number
+        notifyEmails:
+          type: string
+        contactName:
+          type: string
+        contactPhone:
+          type: string
+        contactEmail:
+          type: string
+
+    SendTodoEmailInput:
+      type: object
+      required: [to, subject, body]
+      properties:
+        to:
+          type: string
+          description: Recipient email address
+        subject:
+          type: string
+        body:
+          type: string
+
+    SendTodoEmailResult:
+      type: object
+      required: [ok]
+      properties:
+        ok:
+          type: boolean
+        messageId:
+          type: string
+
+    SalesWeek:
+      type: object
+      required: [week, revenue, orderCount]
+      properties:
+        week:
+          type: string
+        revenue:
+          type: number
+        orderCount:
+          type: number

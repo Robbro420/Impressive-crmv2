@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Robbanbro CRM"
+description = "A full-featured CRM for Robbanbro with beautiful customer cards, Postmark email integration that auto-captures order details, a dashboard with sales goals and KPIs (awaiting production, weekly sales, % growth), and tabbed navigation for different customer categories."
+version = "1.0.0"
+id = "artifacts/robbanbro-crm"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20752
+
+[services.development]
+run = "pnpm --filter @workspace/robbanbro-crm run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/robbanbro-crm", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/robbanbro-crm/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20752"
+BASE_PATH = "/"
