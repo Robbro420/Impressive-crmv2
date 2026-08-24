@@ -31,7 +31,8 @@ function ask(question: string, hidden = false): Promise<string> {
       rl.question(question, (answer) => { rl.close(); resolve(answer.trim()); });
       return;
     }
-    // Dolt läge: eka * istället för tecknen
+    // Dolt läge: inget eko alls (readline stängs — den ekar annars tecknen)
+    rl.close();
     const stdin = process.stdin;
     process.stdout.write(question);
     const chars: string[] = [];
@@ -51,7 +52,6 @@ function ask(question: string, hidden = false): Promise<string> {
         chars.pop();
       } else {
         chars.push(ch);
-        process.stdout.write("*");
       }
     };
     stdin.on("data", onData);
