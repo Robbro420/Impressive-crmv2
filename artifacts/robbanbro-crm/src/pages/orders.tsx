@@ -1,9 +1,19 @@
 import { useState } from "react"
-import { useListOrders } from "@workspace/api-client-react"
+import { useListOrders, useDeleteOrder, getListOrdersQueryKey } from "@workspace/api-client-react"
+import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { useLocation } from "wouter"
-import { PackageOpen, Plus } from "lucide-react"
+import { PackageOpen, Plus, Trash2 } from "lucide-react"
 
 const STATUSES = [
   { id: "alla", label: "Alla" },
@@ -31,12 +41,24 @@ export function getOrderStatusBadgeVariant(status: string) {
 
 export default function Orders() {
   const [activeTab, setActiveTab] = useState("alla")
-  
+  const queryClient = useQueryClient()
+
   const { data: orders, isLoading } = useListOrders({
     status: activeTab === "alla" ? undefined : activeTab
   })
-  
+
   const [, setLocation] = useLocation()
+
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null)
+  const deleteOrder = useDeleteOrder({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() })
+        queryClient.invalidateQueries({ queryKey: ["listOrders"] })
+        setDeleteTarget(null)
+      },
+    },
+  })
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -84,6 +106,7 @@ export default function Orders() {
                   <th className="px-6 py-3.5 font-medium">Ämne</th>
                   <th className="px-6 py-3.5 font-medium">Status</th>
                   <th className="px-6 py-3.5 font-medium text-right">Belopp</th>
+                  <th className="px-3 py-3.5"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -122,11 +145,26 @@ export default function Orders() {
                       <td className="px-6 py-4 text-right font-medium text-foreground">
                         {order.amount ? `${order.amount.toLocaleString('sv-SE')} kr` : '-'}
                       </td>
+                      <td className="px-3 py-4 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setDeleteTarget({
+                              id: order.id,
+                              label: `${order.customerName ?? "Okänd kund"} — ${order.subject ?? `order ${order.id}`}`,
+                            })
+                          }}
+                          title="Radera order"
+                          className="p-2 rounded-lg text-muted-foreground/50 hover:text-destructive hover:bg-destructive/5 transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-16 text-center text-muted-foreground bg-background">
+                    <td colSpan={6} className="px-6 py-16 text-center text-muted-foreground bg-background">
                       <div className="flex flex-col items-center justify-center">
                         <PackageOpen className="h-10 w-10 mb-4 text-muted" />
                         <p className="font-medium text-foreground text-base">Inga ordrar hittades</p>
@@ -140,6 +178,33 @@ export default function Orders() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Radera order-dialog */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Radera ordern?</DialogTitle>
+            <DialogDescription>
+              "{deleteTarget?.label}" tas bort permanent, inklusive dess belopp ur statistiken.
+              Kundkortet påverkas inte. Det går inte att ångra.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteOrder.isPending}>
+              Avbryt
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteTarget && deleteOrder.mutate({ id: deleteTarget.id })}
+              disabled={deleteOrder.isPending}
+              className="gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {deleteOrder.isPending ? "Raderar…" : "Radera order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
