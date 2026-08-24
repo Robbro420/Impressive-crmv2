@@ -4,6 +4,7 @@
   "buildCommand": "pnpm run build",
   "outputDirectory": "artifacts/robbanbro-crm/dist/public",
   "framework": null,
+  "regions": ["fra1"],
   "functions": {
     "api/index.ts": {
       "maxDuration": 60,
@@ -15,6 +16,6 @@
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "crons": [
-    { "path": "/api/cron/campaigns", "schedule": "0 6 * * *" }
+    { "path": "/api/cron/campaigns", "schedule": "0 * * * *" }
   ]
 }
