@@ -62,8 +62,9 @@ async function main() {
   console.log("═══ Import av orderbekräftelser från Skickat (Loopia) ═══");
   console.log(`Server: ${MAIL_HOST} · sedan ${SINCE.toISOString().slice(0, 10)}${DRY_RUN ? " · TESTLÄGE (skickar inget)" : ""}\n`);
 
-  const user = await ask("Din mejladress (avsändarkontot): ");
-  const pass = await ask("Lösenord (syns inte alls när du skriver): ", true);
+  // Uppgifter via miljövariabler (MAIL_USER / MAIL_PASS) — annars frågas de
+  const user = process.env.MAIL_USER || (await ask("Din mejladress (avsändarkontot): "));
+  const pass = process.env.MAIL_PASS || (await ask("Lösenord (syns inte alls när du skriver): ", true));
 
   const client = new ImapFlow({
     host: MAIL_HOST,
