@@ -21,6 +21,7 @@ import { TrendingUp, Package, Megaphone, ArrowRight, GripVertical, CheckCircle2,
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
 import { CustomerQuickView } from "@/components/customer-quick-view"
+import { DailyNotes } from "@/components/daily-notes"
 import {
   DndContext,
   DragEndEvent,
@@ -422,6 +423,9 @@ export default function Dashboard() {
         <h1 className="text-3xl font-black tracking-tight">Översikt</h1>
         <p className="text-muted-foreground mt-1 text-sm font-medium">Din verksamhet i siffror. Välkommen tillbaka.</p>
       </div>
+
+      {/* Dagens anteckningar */}
+      <DailyNotes />
 
       {/* KPI Cards */}
       <div className="grid gap-4 md:grid-cols-3">
