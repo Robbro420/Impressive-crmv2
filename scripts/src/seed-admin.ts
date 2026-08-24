@@ -16,8 +16,7 @@
  *   - Tar bort ALLA andra konton — systemet ska ha exakt en användare.
  */
 import bcrypt from "bcryptjs";
-import { ne, eq } from "drizzle-orm";
-import { db, pool, usersTable } from "@workspace/db";
+import { db, pool, usersTable, ne, eq } from "@workspace/db";
 
 const ADMIN_EMAIL = (process.env.ADMIN_EMAIL ?? "robbanbro@icloud.com").toLowerCase().trim();
 const ADMIN_DISPLAY_NAME = process.env.ADMIN_DISPLAY_NAME ?? "Robban";

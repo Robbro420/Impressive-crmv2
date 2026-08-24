@@ -1,14 +1,17 @@
 import { defineConfig } from "drizzle-kit";
-import path from "path";
 
-if (!process.env.DATABASE_URL) {
+const url = process.env.DATABASE_URL;
+if (!url) {
   throw new Error("DATABASE_URL, ensure the database is provisioned");
 }
 
+// Local development: DATABASE_URL=pglite://./.dev-db (see lib/db/src/index.ts)
+const isPglite = url.startsWith("pglite:");
+
 export default defineConfig({
-  schema: path.join(__dirname, "./src/schema/index.ts"),
+  schema: "./src/schema/index.ts",
   dialect: "postgresql",
-  dbCredentials: {
-    url: process.env.DATABASE_URL,
-  },
+  ...(isPglite
+    ? { driver: "pglite" as const, dbCredentials: { url: url.replace(/^pglite:\/\//, "") } }
+    : { dbCredentials: { url } }),
 });

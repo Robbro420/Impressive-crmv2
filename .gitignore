@@ -50,3 +50,6 @@ Thumbs.db
 # Env
 .env
 .env.local
+
+# Local dev database (PGlite)
+.dev-db/
