@@ -77,10 +77,11 @@ function parseOrderConfirmation(rawText: string): ParsedOrder {
     .filter(Boolean);
   const text = lines.join("\n");
 
-  // Key and value are concatenated directly (no space)
-  const orderNumber    = text.match(/Ordernummer(\d+)/)?.[1] ?? null;
-  const customerNumber = text.match(/Kundnr(\d+)/)?.[1] ?? null;
-  const orderDate      = text.match(/Orderdatum(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
+  // Tolerate both concatenated ("Ordernummer1132", old pdf-parse quirk)
+  // and spaced ("Ordernummer 1132", unpdf) label/value pairs
+  const orderNumber    = text.match(/Ordernummer[ \t]*(\d+)/)?.[1] ?? null;
+  const customerNumber = text.match(/Kundnr[ \t]*(\d+)/)?.[1] ?? null;
+  const orderDate      = text.match(/Orderdatum[ \t]*(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
   const customerRef    = text.match(/Er referens(.+)/m)?.[1]?.trim() ?? null;
   const ourRef         = text.match(/Vår referens(.+)/m)?.[1]?.trim() ?? null;
 
@@ -90,7 +91,7 @@ function parseOrderConfirmation(rawText: string): ParsedOrder {
   let city: string | null = null;
   let postalCode: string | null = null;
 
-  const orderNumIdx = lines.findIndex((l) => /^Ordernummer\d+$/.test(l));
+  const orderNumIdx = lines.findIndex((l) => /^Ordernummer[ \t]*\d+$/.test(l));
   if (orderNumIdx >= 0) {
     const nameLine = lines[orderNumIdx + 1] ?? "";
     // Customer name: not a digit-starting line and not a table header

@@ -141084,16 +141084,16 @@ async function extractPDFText(base64Content) {
 function parseOrderConfirmation(rawText) {
   const lines = rawText.split("\n").map((l2) => l2.trim()).filter(Boolean);
   const text2 = lines.join("\n");
-  const orderNumber = text2.match(/Ordernummer(\d+)/)?.[1] ?? null;
-  const customerNumber = text2.match(/Kundnr(\d+)/)?.[1] ?? null;
-  const orderDate = text2.match(/Orderdatum(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
+  const orderNumber = text2.match(/Ordernummer[ \t]*(\d+)/)?.[1] ?? null;
+  const customerNumber = text2.match(/Kundnr[ \t]*(\d+)/)?.[1] ?? null;
+  const orderDate = text2.match(/Orderdatum[ \t]*(\d{4}-\d{2}-\d{2})/)?.[1] ?? null;
   const customerRef = text2.match(/Er referens(.+)/m)?.[1]?.trim() ?? null;
   const ourRef = text2.match(/Vår referens(.+)/m)?.[1]?.trim() ?? null;
   let customerName = null;
   let address = null;
   let city = null;
   let postalCode = null;
-  const orderNumIdx = lines.findIndex((l2) => /^Ordernummer\d+$/.test(l2));
+  const orderNumIdx = lines.findIndex((l2) => /^Ordernummer[ \t]*\d+$/.test(l2));
   if (orderNumIdx >= 0) {
     const nameLine = lines[orderNumIdx + 1] ?? "";
     if (nameLine && !/^\d/.test(nameLine) && !/^Art\./.test(nameLine)) {
