@@ -40,7 +40,7 @@ export function DailyNotes() {
   const [saved, setSaved] = useState(false)
 
   const date = todayYMD()
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>()
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const latestContent = useRef("")
   const lastSavedContent = useRef("")
 
