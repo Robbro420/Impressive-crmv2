@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { useListTodos } from "@workspace/api-client-react"
 import { CalendarWidget } from "@/components/calendar-widget"
+import { ImpressiveLogo } from "@/components/logo"
 import { useAuth, logout } from "@/hooks/useAuth"
 
 function TodosBadge() {
@@ -34,7 +35,7 @@ function TodosBadgeInactive() {
   const count = todos.filter((t) => !t.done).length
   if (count === 0) return null
   return (
-    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full gradient-bg px-1.5 text-[11px] font-semibold text-white">
       {count}
     </span>
   )
@@ -68,9 +69,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="flex h-16 items-center px-5 border-b border-border">
           <Link href="/">
             <div className="flex items-center gap-2.5 cursor-pointer">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary text-sm font-black shadow-sm shrink-0">
-                <span className="text-primary-foreground font-black">I</span>
-              </div>
+              <ImpressiveLogo className="w-7 h-7 shrink-0" />
               <span className="font-bold text-[17px] tracking-tight text-foreground">
                 Impressive<span className="gradient-text">CRM</span>
               </span>
@@ -88,10 +87,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors cursor-pointer group",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
+                    ? "gradient-bg text-white shadow-md shadow-primary/25"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                 )}>
-                  <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-foreground")} />
+                  <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-white" : "text-muted-foreground group-hover:text-foreground")} />
                   {item.label}
                   {item.hasBadge && (isActive ? <TodosBadge /> : <TodosBadgeInactive />)}
                 </div>
@@ -121,7 +120,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="px-4 py-3 border-t border-border space-y-2">
           {user && (
             <div className="flex items-center gap-2.5 px-1">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center bg-primary text-[11px] font-bold text-primary-foreground shrink-0">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center gradient-bg text-[11px] font-bold text-white shrink-0">
                 {user.displayName.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
@@ -144,12 +143,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Mobile header */}
         <header className="flex h-16 items-center gap-4 border-b bg-card px-6 md:hidden shrink-0">
           <Menu className="h-6 w-6 text-muted-foreground" />
-          <span className="font-bold text-[17px] tracking-tight">
+          <span className="flex items-center gap-2 font-bold text-[17px] tracking-tight">
+            <ImpressiveLogo className="w-6 h-6" />
             Impressive<span className="gradient-text">CRM</span>
           </span>
         </header>
         <div className="flex-1 overflow-auto p-4 md:p-8 bg-background">
-          <div className="mx-auto max-w-[1200px]">
+          <div className="mx-auto max-w-[1560px]">
             {children}
           </div>
         </div>

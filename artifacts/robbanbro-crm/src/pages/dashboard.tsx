@@ -17,7 +17,7 @@ import type { EnrichedOrder } from "@workspace/api-client-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts"
-import { TrendingUp, Package, Megaphone, ArrowRight, GripVertical, CheckCircle2, X, Sparkles, Loader2, PhoneOutgoing } from "lucide-react"
+import { TrendingUp, Package, Megaphone, ArrowRight, GripVertical, CheckCircle2, X, Sparkles, Loader2, PhoneOutgoing, FileText, Rocket } from "lucide-react"
 import { Link } from "wouter"
 import { cn } from "@/lib/utils"
 import { CustomerQuickView } from "@/components/customer-quick-view"
@@ -235,21 +235,35 @@ function OrderCardContent({
   )
 }
 
+// ── Pipeline stages (Pipedrive-stil) ─────────────────────────────────────────
+// Kolumnernas nycklar är orderns status-värden i databasen.
+export const PIPELINE_STAGES = [
+  { key: "ny",          label: "Orderbekräftelse",  icon: FileText },
+  { key: "produktion",  label: "Annonshantering",   icon: Package },
+  { key: "godkänd",     label: "Godkänd för start", icon: CheckCircle2 },
+  { key: "aktiv",       label: "Kampanj live",      icon: Rocket },
+  { key: "uppföljning", label: "Mersälja!",         icon: PhoneOutgoing },
+] as const
+
+function formatSEK(n: number) {
+  return `${Math.round(n).toLocaleString("sv-SE")} kr`
+}
+
 // ── Droppable column ──────────────────────────────────────────────────────────
 function DroppableColumn({
   id,
   label,
   count,
+  sum,
   icon: Icon,
-  accentColor,
   children,
   isEmpty,
 }: {
   id: string
   label: string
   count: number
+  sum: number
   icon: React.ElementType
-  accentColor: string
   children: React.ReactNode
   isEmpty: boolean
 }) {
@@ -257,27 +271,29 @@ function DroppableColumn({
 
   return (
     <div className="flex flex-col min-w-0">
-      {/* Column header */}
-      <div className="flex items-center gap-2 mb-3 px-1">
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: accentColor }}>
-          <Icon className="h-3.5 w-3.5 text-white" />
+      {/* Column header — Pipedrive-stil: namn, antal och summa */}
+      <div className="flex items-start gap-2.5 mb-3 px-1">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 gradient-bg shadow-sm">
+          <Icon className="h-4 w-4 text-white" />
         </div>
-        <span className="text-sm font-black tracking-tight">{label}</span>
-        <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: accentColor + "22", color: "inherit" }}>
-          {count}
-        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-extrabold tracking-tight leading-tight truncate">{label}</p>
+          <p className="text-[11px] text-muted-foreground font-semibold">
+            {count} st · {formatSEK(sum)}
+          </p>
+        </div>
       </div>
 
       {/* Drop zone */}
       <div
         ref={setNodeRef}
         className={cn(
-          "flex flex-col gap-2 rounded-2xl p-2.5 transition-all border-2 overflow-y-auto",
+          "flex flex-col gap-2 rounded-2xl p-2.5 transition-all border-2 overflow-y-auto flex-1",
           isOver
-            ? "border-dashed border-primary/60 bg-secondary/60"
-            : "border-transparent bg-muted/30"
+            ? "border-dashed border-primary/60 bg-secondary/70"
+            : "border-transparent bg-white/60"
         )}
-        style={{ minHeight: 200, maxHeight: 420 }}
+        style={{ minHeight: 320, maxHeight: 520 }}
       >
         {isEmpty ? (
           <div className="flex items-center justify-center text-sm text-muted-foreground font-medium py-10">
@@ -296,10 +312,11 @@ export default function Dashboard() {
   const queryClient = useQueryClient()
   const { data: summary, isLoading: loadingSummary } = useGetDashboardSummary()
   const { data: trend, isLoading: loadingTrend } = useGetSalesTrend({ weeks: 8 })
-  const { data: queue = [], isLoading: loadingQueue } = useGetProductionQueue()
-  const { data: campaigns = [], isLoading: loadingCampaigns } = useGetActiveCampaigns()
-  const { data: followupRaw = [] } = useListOrders({ status: "uppföljning" })
-  const followups = followupRaw as unknown as EnrichedOrder[]
+  const { data: allOrdersRaw = [], isLoading: loadingOrders } = useListOrders()
+  const allOrders = allOrdersRaw as unknown as EnrichedOrder[]
+  const byStage = (key: string) => allOrders.filter((o) => o.status === key)
+  const stageSum = (key: string) =>
+    byStage(key).reduce((acc, o) => acc + (o.amount ? Number(o.amount) : 0), 0)
   const updateOrder = useUpdateOrder()
   const createTodo = useCreateTodo()
 
@@ -318,10 +335,10 @@ export default function Dashboard() {
   )
 
   const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey() })
     queryClient.invalidateQueries({ queryKey: getGetProductionQueueQueryKey() })
     queryClient.invalidateQueries({ queryKey: getGetActiveCampaignsQueryKey() })
     queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() })
-    queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({ status: "uppföljning" }) })
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -336,42 +353,27 @@ export default function Dashboard() {
     const order: EnrichedOrder = active.data.current?.order
     if (!order) return
 
-    const from = queue.find((o) => o.id === order.id)
-      ? "queue"
-      : campaigns.find((o) => o.id === order.id)
-        ? "campaigns"
-        : "followup"
     const to = String(over.id)
-    if (from === to) return
-
-    const statusByColumn: Record<string, string> = {
-      queue: "produktion",
-      campaigns: "aktiv",
-      followup: "uppföljning",
-    }
-    const newStatus = statusByColumn[to]
-    if (!newStatus) return
+    if (!PIPELINE_STAGES.some((s) => s.key === to) || order.status === to) return
 
     // Optimistisk flytt mellan kolumner
-    queryClient.setQueryData(getGetProductionQueueQueryKey(),
-      to === "queue" ? [...queue.filter((o) => o.id !== order.id), { ...order }] : queue.filter((o) => o.id !== order.id))
-    queryClient.setQueryData(getGetActiveCampaignsQueryKey(),
-      to === "campaigns" ? [...campaigns.filter((o) => o.id !== order.id), { ...order }] : campaigns.filter((o) => o.id !== order.id))
-    queryClient.setQueryData(getListOrdersQueryKey({ status: "uppföljning" }),
-      to === "followup" ? [...followups.filter((o) => o.id !== order.id), { ...order }] : followups.filter((o) => o.id !== order.id))
+    queryClient.setQueryData(
+      getListOrdersQueryKey(),
+      allOrders.map((o) => (o.id === order.id ? { ...o, status: to } : o)),
+    )
 
     updateOrder.mutate(
-      { id: order.id, data: { status: newStatus } },
+      { id: order.id, data: { status: to } },
       { onSuccess: invalidate, onError: invalidate }
     )
   }
 
-  // Mark an order as "klar" — removes it from both pipeline columns
+  // Mark an order as "klar" — removes it from the board
   const handleMarkDone = (order: EnrichedOrder) => {
-    // Optimistically remove from whichever list it's in
-    queryClient.setQueryData(getGetProductionQueueQueryKey(), queue.filter((o) => o.id !== order.id))
-    queryClient.setQueryData(getGetActiveCampaignsQueryKey(), campaigns.filter((o) => o.id !== order.id))
-    queryClient.setQueryData(getListOrdersQueryKey({ status: "uppföljning" }), followups.filter((o) => o.id !== order.id))
+    queryClient.setQueryData(
+      getListOrdersQueryKey(),
+      allOrders.map((o) => (o.id === order.id ? { ...o, status: "klar" } : o)),
+    )
     updateOrder.mutate(
       { id: order.id, data: { status: "klar" } },
       { onSuccess: invalidate, onError: invalidate }
@@ -444,7 +446,7 @@ export default function Dashboard() {
                   </span>{" "}jämfört med förra veckan
                 </p>
               </div>
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--primary))" }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 gradient-bg shadow-md shadow-primary/20">
                 <TrendingUp className="h-5 w-5 text-white" />
               </div>
             </div>
@@ -455,8 +457,8 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-semibold text-muted-foreground mb-3">Produktionskö</p>
-                <div className="text-3xl font-black tracking-tight">{loadingQueue ? "–" : queue.length}</div>
+                <p className="text-sm font-semibold text-muted-foreground mb-3">Annonshantering</p>
+                <div className="text-3xl font-black tracking-tight">{loadingOrders ? "–" : byStage("produktion").length}</div>
                 <p className="text-xs text-muted-foreground mt-2 font-medium">Ordrar som väntar på produktion</p>
               </div>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--warning))" }}>
@@ -470,8 +472,8 @@ export default function Dashboard() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-semibold text-muted-foreground mb-3">Aktiva Kampanjer</p>
-                <div className="text-3xl font-black tracking-tight">{loadingCampaigns ? "–" : campaigns.length}</div>
+                <p className="text-sm font-semibold text-muted-foreground mb-3">Kampanjer live</p>
+                <div className="text-3xl font-black tracking-tight">{loadingOrders ? "–" : byStage("aktiv").length}</div>
                 <p className="text-xs text-muted-foreground mt-2 font-medium">Kampanjer som är igång just nu</p>
               </div>
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "hsl(var(--success))" }}>
@@ -492,8 +494,8 @@ export default function Dashboard() {
           <svg width="0" height="0">
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#6352c5" />
-                <stop offset="100%" stopColor="#8b7ce0" />
+                <stop offset="0%" stopColor="#5059f0" />
+                <stop offset="100%" stopColor="#2f7ef8" />
               </linearGradient>
             </defs>
           </svg>
@@ -503,7 +505,7 @@ export default function Dashboard() {
               <XAxis dataKey="week" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" />
               <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} fontFamily="Inter" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
               <RechartsTooltip
-                cursor={{ fill: "rgba(99,82,197,0.05)" }}
+                cursor={{ fill: "rgba(80,89,240,0.06)" }}
                 contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 8px 24px rgba(20,20,43,0.08)", fontSize: "13px", fontFamily: "Inter" }}
                 formatter={(value: number) => [`${value.toLocaleString("sv-SE")} kr`, "Omsättning"]}
               />
@@ -523,48 +525,27 @@ export default function Dashboard() {
         </div>
 
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Produktionskö */}
-            <DroppableColumn
-              id="queue"
-              label="Produktionskö"
-              count={queue.length}
-              icon={Package}
-              accentColor="hsl(var(--warning))"
-              isEmpty={queue.length === 0}
-            >
-              {queue.map((order) => (
-                <DraggableOrderCard key={order.id} order={order} onMarkDone={handleMarkDone} onOpenCustomer={openCustomer} />
-              ))}
-            </DroppableColumn>
-
-            {/* Aktiva kampanjer */}
-            <DroppableColumn
-              id="campaigns"
-              label="Aktiva Kampanjer"
-              count={campaigns.length}
-              icon={Megaphone}
-              accentColor="hsl(var(--success))"
-              isEmpty={campaigns.length === 0}
-            >
-              {campaigns.map((order) => (
-                <DraggableOrderCard key={order.id} order={order} onMarkDone={handleMarkDone} onOpenCustomer={openCustomer} />
-              ))}
-            </DroppableColumn>
-
-            {/* Uppföljning / Mersälj */}
-            <DroppableColumn
-              id="followup"
-              label="Uppföljning / Mersälj"
-              count={followups.length}
-              icon={PhoneOutgoing}
-              accentColor="hsl(var(--primary))"
-              isEmpty={followups.length === 0}
-            >
-              {followups.map((order) => (
-                <DraggableOrderCard key={order.id} order={order} onMarkDone={handleMarkDone} onOpenCustomer={openCustomer} />
-              ))}
-            </DroppableColumn>
+          <div className="overflow-x-auto pb-2 -mx-1 px-1">
+            <div className="grid grid-cols-5 gap-4 min-w-[1180px]">
+              {PIPELINE_STAGES.map((stage) => {
+                const orders = byStage(stage.key)
+                return (
+                  <DroppableColumn
+                    key={stage.key}
+                    id={stage.key}
+                    label={stage.label}
+                    count={orders.length}
+                    sum={stageSum(stage.key)}
+                    icon={stage.icon}
+                    isEmpty={orders.length === 0}
+                  >
+                    {orders.map((order) => (
+                      <DraggableOrderCard key={order.id} order={order} onMarkDone={handleMarkDone} onOpenCustomer={openCustomer} />
+                    ))}
+                  </DroppableColumn>
+                )
+              })}
+            </div>
           </div>
 
           {/* Drag overlay — ghost card that follows the cursor */}

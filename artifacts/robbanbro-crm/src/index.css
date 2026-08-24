@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -39,53 +39,62 @@
   --radius-lg: calc(var(--radius) + 4px);
 }
 
+/*
+ * Impressive-tema: vitt och luftigt med mjuka blå toner och
+ * blå→indigo-gradientaccenter — hämtat från impressivemedia.se/webb.
+ */
 :root {
-  --background: 240 10% 98%;
-  --foreground: 240 10% 10%;
+  --background: 220 60% 98%;
+  --foreground: 228 30% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 10%;
+  --card-foreground: 228 30% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 10%;
-  --primary: 255 55% 52%;       /* calm indigo-violet */
+  --popover-foreground: 228 30% 10%;
+  --primary: 235 78% 60%;        /* indigo-blå #4a58ee */
   --primary-foreground: 0 0% 100%;
-  --secondary: 255 35% 96%;     /* faint violet tint */
-  --secondary-foreground: 255 40% 32%;
-  --muted: 240 6% 95%;
-  --muted-foreground: 240 4% 44%;
-  --accent: 255 35% 96%;
-  --accent-foreground: 255 40% 32%;
+  --secondary: 226 70% 96%;      /* ljus blåtonad platta */
+  --secondary-foreground: 232 50% 34%;
+  --muted: 222 30% 95%;
+  --muted-foreground: 227 12% 44%;
+  --accent: 226 70% 96%;
+  --accent-foreground: 232 50% 34%;
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --border: 240 6% 89%;
-  --input: 240 6% 86%;
-  --ring: 255 55% 52%;
-  --radius: 0.625rem;
+  --border: 224 30% 90%;
+  --input: 224 30% 87%;
+  --ring: 235 78% 60%;
+  --radius: 0.75rem;
 
-  /* Status colors — used for KPI icons, badges, progress */
+  /* Varumärkesgradient — knappar, aktiva element, accenter */
+  --brand-from: 239 82% 62%;     /* #5059f0 */
+  --brand-to: 217 92% 58%;       /* #2f7ef8 */
+  --brand-gradient: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-to)));
+
+  /* Statusfärger — KPI-ikoner, badges, progress */
   --success: 160 84% 32%;
   --warning: 24 94% 45%;
 }
 
 .dark {
-  --background: 240 10% 5%;
-  --foreground: 0 0% 97%;
-  --card: 240 8% 8%;
-  --card-foreground: 0 0% 97%;
-  --popover: 240 8% 8%;
-  --popover-foreground: 0 0% 97%;
-  --primary: 255 60% 66%;
+  --background: 233 30% 8%;
+  --foreground: 220 30% 96%;
+  --card: 232 26% 11%;
+  --card-foreground: 220 30% 96%;
+  --popover: 232 26% 11%;
+  --popover-foreground: 220 30% 96%;
+  --primary: 235 82% 66%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 255 18% 15%;
-  --secondary-foreground: 0 0% 97%;
-  --muted: 240 8% 14%;
-  --muted-foreground: 240 5% 64%;
-  --accent: 255 18% 15%;
-  --accent-foreground: 0 0% 97%;
-  --destructive: 0 63% 40%;
+  --secondary: 233 24% 16%;
+  --secondary-foreground: 220 30% 96%;
+  --muted: 233 20% 15%;
+  --muted-foreground: 226 12% 64%;
+  --accent: 233 24% 16%;
+  --accent-foreground: 220 30% 96%;
+  --destructive: 0 63% 42%;
   --destructive-foreground: 0 0% 98%;
-  --border: 240 8% 17%;
-  --input: 240 8% 20%;
-  --ring: 255 60% 66%;
+  --border: 233 20% 19%;
+  --input: 233 20% 22%;
+  --ring: 235 82% 66%;
 
   --success: 160 70% 42%;
   --warning: 28 90% 55%;
@@ -96,24 +105,29 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
+    /* Mjuka blå ljusglober à la impressivemedia-sajterna */
+    background:
+      radial-gradient(1000px 520px at 88% -12%, hsl(var(--brand-to) / 0.10), transparent 62%),
+      radial-gradient(800px 460px at -12% 24%, hsl(var(--brand-from) / 0.07), transparent 60%),
+      hsl(var(--background));
+    background-attachment: fixed;
     font-feature-settings: 'cv11', 'ss01';
   }
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    letter-spacing: -0.025em;
+    font-weight: 800;
+    letter-spacing: -0.03em;
   }
 }
 
-/* Brand accent utilities.
-   Historically these were purple→cyan gradients; the design system now uses
-   a single calm accent color, so they resolve to solid primary. */
+/* Varumärkesaccenter */
 .gradient-text {
-  background: none;
-  -webkit-text-fill-color: currentColor;
-  color: hsl(var(--primary));
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .gradient-bg {
-  background: hsl(var(--primary));
+  background: var(--brand-gradient);
 }

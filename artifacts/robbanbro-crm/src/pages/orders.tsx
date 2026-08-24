@@ -7,10 +7,11 @@ import { PackageOpen, Plus } from "lucide-react"
 
 const STATUSES = [
   { id: "alla", label: "Alla" },
-  { id: "ny", label: "Ny" },
-  { id: "produktion", label: "Produktion" },
-  { id: "aktiv", label: "Aktiv kampanj" },
-  { id: "uppföljning", label: "Uppföljning" },
+  { id: "ny", label: "Orderbekräftelse" },
+  { id: "produktion", label: "Annonshantering" },
+  { id: "godkänd", label: "Godkänd för start" },
+  { id: "aktiv", label: "Kampanj live" },
+  { id: "uppföljning", label: "Mersälja!" },
   { id: "klar", label: "Klar" },
   { id: "levererad", label: "Levererad" },
   { id: "avbokad", label: "Avbokad" }
@@ -20,6 +21,7 @@ export function getOrderStatusBadgeVariant(status: string) {
   switch (status.toLowerCase()) {
     case 'ny': return 'info'
     case 'produktion': return 'warning'
+    case 'godkänd': return 'info'
     case 'klar': return 'success'
     case 'levererad': return 'secondary'
     case 'avbokad': return 'destructive'
