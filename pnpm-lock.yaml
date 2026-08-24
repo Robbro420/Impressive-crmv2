@@ -418,6 +418,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.5
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1

@@ -110713,6 +110713,10 @@ var GetEmailResponse = objectType({
   "receivedAt": coerce.date(),
   "createdAt": coerce.date()
 });
+var DeleteEmailParams = objectType({
+  "id": coerce.number()
+});
+var DeleteEmailResponse = voidType();
 var LinkEmailToCustomerParams = objectType({
   "id": coerce.number()
 });
@@ -141246,6 +141250,19 @@ router4.get("/emails/:id", async (req, res) => {
     return;
   }
   res.json({ ...row.email, customerName: row.customerName });
+});
+router4.delete("/emails/:id", async (req, res) => {
+  const params = GetEmailParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+  const deleted = await db.delete(emailsTable).where(eq(emailsTable.id, params.data.id)).returning({ id: emailsTable.id });
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "Email not found" });
+    return;
+  }
+  res.status(204).end();
 });
 router4.post("/emails/:id/link-customer", async (req, res) => {
   const params = LinkEmailToCustomerParams.safeParse(req.params);

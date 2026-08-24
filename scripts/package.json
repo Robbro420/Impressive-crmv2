@@ -17,6 +17,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "catalog:",
+    "@types/ws": "^8.18.1",
     "pdf-lib": "^1.17.1",
     "tsx": "catalog:"
   }
