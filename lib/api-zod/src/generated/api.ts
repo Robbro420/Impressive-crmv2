@@ -377,6 +377,16 @@ export const GetEmailResponse = zod.object({
 
 
 /**
+ * @summary Delete an email
+ */
+export const DeleteEmailParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteEmailResponse = zod.void()
+
+
+/**
  * @summary Link an email to a customer
  */
 export const LinkEmailToCustomerParams = zod.object({

@@ -304,6 +304,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Email"
+    delete:
+      operationId: deleteEmail
+      tags: [emails]
+      summary: Delete an email
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
 
   /emails/{id}/link-customer:
     post:

@@ -311,6 +311,27 @@ router.get("/emails/:id", async (req, res): Promise<void> => {
   res.json({ ...row.email, customerName: row.customerName });
 });
 
+router.delete("/emails/:id", async (req, res): Promise<void> => {
+  const params = GetEmailParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  // orders.email_id has ON DELETE SET NULL — kopplade ordrar påverkas inte
+  const deleted = await db
+    .delete(emailsTable)
+    .where(eq(emailsTable.id, params.data.id))
+    .returning({ id: emailsTable.id });
+
+  if (deleted.length === 0) {
+    res.status(404).json({ error: "Email not found" });
+    return;
+  }
+
+  res.status(204).end();
+});
+
 router.post("/emails/:id/link-customer", async (req, res): Promise<void> => {
   const params = LinkEmailToCustomerParams.safeParse(req.params);
   if (!params.success) {

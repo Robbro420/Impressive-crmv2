@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import {
   useListEmails,
   useLinkEmailToCustomer,
+  useDeleteEmail,
   useListCustomers,
   getListEmailsQueryKey,
 } from "@workspace/api-client-react"
@@ -16,30 +17,41 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
-import { Mail, Clock, CheckCircle2, UserPlus, FileText, Search, User } from "lucide-react"
+import { Mail, Clock, CheckCircle2, UserPlus, FileText, Search, User, Trash2 } from "lucide-react"
 
 type LinkIntent = { emailId: number; createOrder: boolean } | null
 
 export default function Inbox() {
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<"unprocessed" | "processed">("unprocessed")
   const [linkIntent, setLinkIntent] = useState<LinkIntent>(null)
   const [customerSearch, setCustomerSearch] = useState("")
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; subject: string } | null>(null)
 
-  const { data: emails, isLoading } = useListEmails({
-    processed: activeTab === "processed",
-  })
+  // Ett enda flöde — allt kommer från Postmark-webhooken, nyast överst
+  const { data: emails, isLoading } = useListEmails()
 
   const { data: customers } = useListCustomers()
+
+  const invalidateEmails = () =>
+    queryClient.invalidateQueries({ queryKey: getListEmailsQueryKey() })
 
   const linkEmail = useLinkEmailToCustomer({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListEmailsQueryKey({ processed: false }) })
-        queryClient.invalidateQueries({ queryKey: getListEmailsQueryKey({ processed: true }) })
+        invalidateEmails()
         closeDialog()
+      },
+    },
+  })
+
+  const deleteEmail = useDeleteEmail({
+    mutation: {
+      onSuccess: () => {
+        invalidateEmails()
+        setDeleteTarget(null)
       },
     },
   })
@@ -76,30 +88,14 @@ export default function Inbox() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Inkorg</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Ordermejl</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Hantera inkommande e-post och skapa ordrar automatiskt.
+          Orderbekräftelser som kommit in via mejl. Med PDF skapas kund och order automatiskt —
+          resten hanterar du här.
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-border/50">
-        {(["unprocessed", "processed"] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`pb-3 px-1 text-sm font-medium border-b-2 transition-all ${
-              activeTab === tab
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab === "unprocessed" ? "Obehandlade" : "Behandlade"}
-          </button>
-        ))}
-      </div>
-
-      {/* Email list */}
+      {/* Email list — ett flöde, nyast överst */}
       <div className="space-y-4">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
@@ -152,7 +148,7 @@ export default function Inbox() {
                 {/* Right: actions */}
                 <div className="flex flex-row md:flex-col gap-2 shrink-0 md:w-48 pt-2 md:pt-0 border-t md:border-t-0 md:border-l border-border/50 md:pl-6 mt-2 md:mt-0">
                   {email.processed ? (
-                    <div className="bg-emerald-500/10 p-4 rounded-lg text-sm text-center border border-emerald-500/20">
+                    <div className="bg-emerald-500/10 p-4 rounded-lg text-sm text-center border border-emerald-500/20 flex-1 md:flex-none">
                       <CheckCircle2 className="h-6 w-6 text-emerald-600 mx-auto mb-2" />
                       <span className="font-medium text-emerald-800 dark:text-emerald-400">
                         Behandlad
@@ -184,100 +180,116 @@ export default function Inbox() {
                       </Button>
                     </div>
                   )}
+
+                  <button
+                    onClick={() => setDeleteTarget({ id: email.id, subject: email.subject || "Utan ämne" })}
+                    className="flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Radera
+                  </button>
                 </div>
               </div>
             </Card>
           ))
         ) : (
-          <div className="text-center p-16 bg-card rounded-xl border border-dashed border-border/50">
-            <Mail className="h-10 w-10 text-muted mx-auto mb-4" />
-            <p className="font-medium text-foreground text-base">Inga e-mail</p>
+          <div className="p-16 text-center border border-dashed border-border rounded-2xl bg-card/50">
+            <Mail className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />
+            <p className="font-semibold text-foreground">Inga ordermejl ännu</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Du har inga{" "}
-              {activeTab === "unprocessed" ? "obehandlade" : "behandlade"} e-mail i
-              inkorgen.
+              Mejl som BCC:as till din Postmark-adress dyker upp här automatiskt.
             </p>
           </div>
         )}
       </div>
 
-      {/* Link / Create Order dialog */}
-      <Dialog open={!!linkIntent} onOpenChange={(open) => { if (!open) closeDialog() }}>
+      {/* Radera-dialog */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
+            <DialogTitle>Radera mejlet?</DialogTitle>
+            <DialogDescription>
+              "{deleteTarget?.subject}" tas bort permanent. Ordrar som skapats från mejlet
+              påverkas inte.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={deleteEmail.isPending}>
+              Avbryt
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteTarget && deleteEmail.mutate({ id: deleteTarget.id })}
+              disabled={deleteEmail.isPending}
+              className="gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {deleteEmail.isPending ? "Raderar…" : "Radera"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Koppla till kund-dialog */}
+      <Dialog open={linkIntent !== null} onOpenChange={(open) => !open && closeDialog()}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
             <DialogTitle>
-              {linkIntent?.createOrder ? "Skapa order från e-mail" : "Koppla till kund"}
+              {linkIntent?.createOrder ? "Skapa order från mejl" : "Koppla mejl till kund"}
             </DialogTitle>
             <DialogDescription>
-              {linkIntent?.createOrder
-                ? "Välj kund — en ny order skapas med mejlets text som ordertext."
-                : "Välj kund att koppla mejlet till utan att skapa order."}
+              Välj vilken kund mejlet hör till{linkIntent?.createOrder ? " — en order skapas samtidigt." : "."}
             </DialogDescription>
           </DialogHeader>
 
-          {/* Search */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Sök kund…"
-              className="pl-9"
+              placeholder="Sök på namn, e-post eller företag…"
               value={customerSearch}
               onChange={(e) => setCustomerSearch(e.target.value)}
+              className="pl-9"
               autoFocus
             />
           </div>
 
-          {/* Customer list */}
-          <div className="max-h-64 overflow-y-auto divide-y divide-border rounded-md border border-border">
+          <div className="max-h-64 overflow-y-auto space-y-1 -mx-1 px-1">
             {filteredCustomers.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                Inga kunder hittades.
-              </div>
+              <p className="text-sm text-muted-foreground text-center py-6">Ingen kund matchar sökningen.</p>
             ) : (
-              filteredCustomers.map((c) => (
+              filteredCustomers.slice(0, 50).map((c) => (
                 <button
                   key={c.id}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 ${
-                    selectedCustomerId === c.id ? "bg-primary/10 font-semibold" : ""
-                  }`}
                   onClick={() => setSelectedCustomerId(c.id)}
-                >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${
+                  className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
                     selectedCustomerId === c.id
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
-                    {c.name.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="overflow-hidden">
-                    <p className="text-sm truncate">{c.name}</p>
-                    {c.company && (
-                      <p className="text-xs text-muted-foreground truncate">{c.company}</p>
-                    )}
-                  </div>
-                  {selectedCustomerId === c.id && (
-                    <CheckCircle2 className="h-4 w-4 text-primary ml-auto shrink-0" />
-                  )}
+                      ? "bg-primary/10 border border-primary/40"
+                      : "hover:bg-secondary border border-transparent"
+                  }`}
+                >
+                  <User className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold truncate">{c.name}</span>
+                    <span className="block text-xs text-muted-foreground truncate">
+                      {c.email || c.company || "—"}
+                    </span>
+                  </span>
                 </button>
               ))
             )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={closeDialog}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={closeDialog} disabled={linkEmail.isPending}>
               Avbryt
             </Button>
             <Button
-              disabled={selectedCustomerId === null || linkEmail.isPending}
               onClick={handleConfirm}
+              disabled={selectedCustomerId === null || linkEmail.isPending}
             >
-              {linkEmail.isPending
-                ? "Sparar…"
-                : linkIntent?.createOrder
-                ? "Skapa order"
-                : "Koppla"}
+              {linkEmail.isPending ? "Sparar…" : linkIntent?.createOrder ? "Koppla & skapa order" : "Koppla"}
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

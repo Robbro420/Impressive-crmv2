@@ -45,7 +45,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/customers", label: "Kundlista", icon: Users },
   { href: "/orders", label: "Ordrar", icon: ShoppingCart },
-  { href: "/inbox", label: "Inkorg", icon: Inbox },
+  { href: "/inbox", label: "Ordermejl", icon: Inbox },
   { href: "/import", label: "AI-import", icon: Wand2 },
   { href: "/todos", label: "Mersälj", icon: ClipboardList, hasBadge: true },
   { href: "/arenden", label: "Ärenden", icon: FolderOpen },

@@ -1142,6 +1142,77 @@ export function useGetEmail<TData = Awaited<ReturnType<typeof getEmail>>, TError
 
 
 
+export const getDeleteEmailUrl = (id: number,) => {
+
+
+
+
+  return `/api/emails/${id}`
+}
+
+/**
+ * @summary Delete an email
+ */
+export const deleteEmail = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteEmailUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteEmailMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmail>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteEmail>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteEmail'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteEmail>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteEmail(id,)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteEmailMutationResult = NonNullable<Awaited<ReturnType<typeof deleteEmail>>>
+
+    export type DeleteEmailMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete an email
+ */
+export const useDeleteEmail = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteEmail>>, TError,{id: number}, TContext>, }
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteEmail>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteEmailMutationOptions(options));
+    }
+
 export const getLinkEmailToCustomerUrl = (id: number,) => {
 
 
