@@ -2,18 +2,17 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Building, Mail, AlertTriangle, ShieldCheck, Users, Check, Lock } from "lucide-react"
+import { Mail, AlertTriangle, ShieldCheck, Users, Check, Lock } from "lucide-react"
 import { useAuth, updateProfile } from "@/hooks/useAuth"
 
 export default function Settings() {
-  const { user, refetch } = useAuth()
+  const { user } = useAuth()
 
-  // Team settings
-  const [chatName, setChatName] = useState("")
+  // Profile settings
+  const [displayName, setDisplayName] = useState("")
   const [colleagueEmail, setColleagueEmail] = useState("")
-  const [gmailAddress, setGmailAddress] = useState("")
-  const [savedTeam, setSavedTeam] = useState(false)
-  const [teamError, setTeamError] = useState("")
+  const [savedProfile, setSavedProfile] = useState(false)
+  const [profileError, setProfileError] = useState("")
 
   // Password change
   const [currentPassword, setCurrentPassword] = useState("")
@@ -25,20 +24,19 @@ export default function Settings() {
   // Sync from loaded user
   useEffect(() => {
     if (user) {
-      setChatName(user.chatName ?? user.displayName)
+      setDisplayName(user.displayName)
       setColleagueEmail(user.colleagueEmail ?? "")
-      setGmailAddress(user.gmailAddress ?? "")
     }
   }, [user])
 
-  const handleSaveTeam = async () => {
-    setTeamError("")
-    const result = await updateProfile({ chatName, colleagueEmail, gmailAddress })
+  const handleSaveProfile = async () => {
+    setProfileError("")
+    const result = await updateProfile({ displayName, colleagueEmail })
     if (result.ok) {
-      setSavedTeam(true)
-      setTimeout(() => setSavedTeam(false), 2000)
+      setSavedProfile(true)
+      setTimeout(() => setSavedProfile(false), 2000)
     } else {
-      setTeamError(result.error)
+      setProfileError(result.error)
     }
   }
 
@@ -48,8 +46,8 @@ export default function Settings() {
       setPasswordError("Lösenorden matchar inte")
       return
     }
-    if (newPassword.length < 6) {
-      setPasswordError("Lösenordet måste vara minst 6 tecken")
+    if (newPassword.length < 8) {
+      setPasswordError("Lösenordet måste vara minst 8 tecken")
       return
     }
     const result = await updateProfile({ password: currentPassword, newPassword })
@@ -73,7 +71,7 @@ export default function Settings() {
 
       <div className="grid gap-6">
 
-        {/* Team / Profile */}
+        {/* Profile */}
         <Card className="shadow-sm border-border/50">
           <CardHeader className="bg-secondary/10 border-b border-border/50">
             <div className="flex items-center gap-3">
@@ -83,27 +81,26 @@ export default function Settings() {
               <div>
                 <CardTitle className="text-lg">Min profil</CardTitle>
                 <CardDescription className="mt-0.5">
-                  {user ? `Inloggad som ${user.displayName} (${user.username})` : "Dina uppgifter för chatt och e-postutskick"}
+                  {user ? `Inloggad som ${user.displayName} (${user.username})` : "Dina profiluppgifter"}
                 </CardDescription>
               </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-3">
-              <label className="text-sm font-semibold text-foreground">Visningsnamn i chatten</label>
+              <label className="text-sm font-semibold text-foreground">Visningsnamn</label>
               <div className="max-w-md">
                 <Input
-                  placeholder="T.ex. Robin"
-                  value={chatName}
-                  onChange={(e) => setChatName(e.target.value)}
+                  placeholder="T.ex. Robban"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                   className="bg-background"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">Visas som avsändare i chatten.</p>
             </div>
 
             <div className="grid gap-3">
-              <label className="text-sm font-semibold text-foreground">Kollegans e-postadress</label>
+              <label className="text-sm font-semibold text-foreground">Standardmottagare för uppföljningsmejl</label>
               <div className="max-w-md">
                 <Input
                   type="email"
@@ -113,29 +110,15 @@ export default function Settings() {
                   className="bg-background"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">Fylls i automatiskt när du skickar ett ärende via mejl.</p>
+              <p className="text-xs text-muted-foreground">Fylls i automatiskt när du skickar ett Mersälj-objekt via mejl.</p>
             </div>
 
-            <div className="grid gap-3">
-              <label className="text-sm font-semibold text-foreground">Din Gmail-adress</label>
-              <div className="max-w-md">
-                <Input
-                  type="email"
-                  placeholder="din@gmail.com"
-                  value={gmailAddress}
-                  onChange={(e) => setGmailAddress(e.target.value)}
-                  className="bg-background"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground">Används för Gmail-integration.</p>
-            </div>
-
-            {teamError && (
-              <p className="text-sm text-destructive font-medium">{teamError}</p>
+            {profileError && (
+              <p className="text-sm text-destructive font-medium">{profileError}</p>
             )}
 
-            <Button onClick={handleSaveTeam} variant={savedTeam ? "default" : "outline"} className="mt-1">
-              {savedTeam ? <><Check className="h-4 w-4 mr-1" /> Sparat</> : "Spara profil"}
+            <Button onClick={handleSaveProfile} variant={savedProfile ? "default" : "outline"} className="mt-1">
+              {savedProfile ? <><Check className="h-4 w-4 mr-1" /> Sparat</> : "Spara profil"}
             </Button>
           </CardContent>
         </Card>
@@ -201,10 +184,13 @@ export default function Settings() {
                 <p className="font-semibold text-sm text-foreground">Webhook URL</p>
               </div>
               <code className="bg-background px-4 py-2.5 rounded-md border border-border/60 block select-all font-mono text-[13px] shadow-inner text-foreground/90">
-                {window.location.origin}/api/emails/webhook
+                {window.location.origin}/api/emails/webhook?token=DIN-HEMLIGA-TOKEN
               </code>
               <p className="text-muted-foreground text-sm mt-4 leading-relaxed">
-                Kopiera denna URL och klistra in i Postmark-panelen under ditt Servers <span className="font-medium text-foreground">Inbound Webhook settings</span>.
+                Ersätt <span className="font-medium text-foreground">DIN-HEMLIGA-TOKEN</span> med värdet på miljövariabeln{" "}
+                <span className="font-mono text-foreground">POSTMARK_WEBHOOK_TOKEN</span> och klistra in hela URL:en i
+                Postmark-panelen under <span className="font-medium text-foreground">Inbound Webhook settings</span>.
+                Utan rätt token avvisas anropet.
               </p>
             </div>
           </CardContent>

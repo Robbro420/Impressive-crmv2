@@ -7,10 +7,7 @@ import {
   UpdateTodoParams,
   DeleteTodoParams,
 } from "@workspace/api-zod";
-import { ReplitConnectors } from "@replit/connectors-sdk";
 import { z } from "zod";
-
-const connectors = new ReplitConnectors();
 
 const SendEmailBody = z.object({
   to: z.string().email(),
@@ -107,11 +104,23 @@ router.post("/todos/:id/send-email", async (req, res): Promise<void> => {
 
   const { to, subject, body } = parsed.data;
 
-  const response = await connectors.proxy("resend", "/emails", {
+  const apiKey = process.env["RESEND_API_KEY"];
+  if (!apiKey) {
+    res.status(503).json({ error: "Mejlutskick är inte konfigurerat (RESEND_API_KEY saknas)." });
+    return;
+  }
+  // RESEND_FROM must be a sender on a domain verified in Resend.
+  // "onboarding@resend.dev" works for testing (only to your own address).
+  const from = process.env["RESEND_FROM"] ?? "Impressive CRM <onboarding@resend.dev>";
+
+  const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      from: "Robbanbro CRM <noreply@robbanbro.se>",
+      from,
       to: [to],
       subject,
       text: body,

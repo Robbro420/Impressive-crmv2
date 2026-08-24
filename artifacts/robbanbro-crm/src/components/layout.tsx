@@ -14,9 +14,7 @@ import {
   CalendarCheck,
   Wand2,
 } from "lucide-react"
-import { SiGoogle } from "react-icons/si"
 import { useListTodos } from "@workspace/api-client-react"
-import { ChatWidget } from "@/components/chat-widget"
 import { CalendarWidget } from "@/components/calendar-widget"
 import { useAuth, logout } from "@/hooks/useAuth"
 
@@ -51,7 +49,6 @@ const navItems = [
   { href: "/todos", label: "Mersälj", icon: ClipboardList, hasBadge: true },
   { href: "/arenden", label: "Ärenden", icon: FolderOpen },
   { href: "/goals", label: "Mål", icon: Target },
-  { href: "/google", label: "Google", icon: SiGoogle },
   { href: "/settings", label: "Inställningar", icon: Settings },
 ]
 
@@ -160,7 +157,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </main>
-      <ChatWidget />
     </div>
   )
 }

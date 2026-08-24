@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 import { Router, type IRouter } from "express";
-import { eq, or, ilike } from "drizzle-orm";
+import { and, desc, eq, ilike } from "drizzle-orm";
 import { db, emailsTable, customersTable, ordersTable, timelineTable } from "@workspace/db";
 import {
   GetEmailParams,
@@ -8,6 +8,7 @@ import {
   LinkEmailToCustomerBody,
   ReceiveEmailWebhookBody,
 } from "@workspace/api-zod";
+import { extractOrderWithAI, hasGemini } from "../lib/extract-order";
 
 const _require = createRequire(import.meta.url);
 const router: IRouter = Router();
@@ -18,6 +19,9 @@ interface ParsedOrder {
   orderNumber: string | null;
   customerNumber: string | null;
   customerName: string | null;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  orgNumber: string | null;
   address: string | null;
   city: string | null;
   postalCode: string | null;
@@ -26,11 +30,39 @@ interface ParsedOrder {
   productDescription: string | null;
   customerRef: string | null;
   ourRef: string | null;
+  paymentTerms: string | null;
+  campaignStart: string | null;
+  campaignEnd: string | null;
+  campaignDays: number | null;
 }
+
+const EMPTY_PARSED: ParsedOrder = {
+  orderNumber: null,
+  customerNumber: null,
+  customerName: null,
+  customerEmail: null,
+  customerPhone: null,
+  orgNumber: null,
+  address: null,
+  city: null,
+  postalCode: null,
+  orderDate: null,
+  amount: null,
+  productDescription: null,
+  customerRef: null,
+  ourRef: null,
+  paymentTerms: null,
+  campaignStart: null,
+  campaignEnd: null,
+  campaignDays: null,
+};
 
 async function extractPDFText(base64Content: string): Promise<string> {
   try {
-    const pdfParse = _require("pdf-parse");
+    // Import the implementation directly — pdf-parse's index.js runs a
+    // debug block (reads a test PDF from disk) when it has no module.parent,
+    // which crashes in bundled/serverless environments.
+    const pdfParse = _require("pdf-parse/lib/pdf-parse.js");
     const buffer = Buffer.from(base64Content, "base64");
     const result = await pdfParse(buffer);
     return result.text as string;
@@ -106,6 +138,7 @@ function parseOrderConfirmation(rawText: string): ParsedOrder {
   }
 
   return {
+    ...EMPTY_PARSED,
     orderNumber,
     customerNumber,
     customerName,
@@ -139,6 +172,41 @@ function addDays(dateStr: string, days: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * AI-first extraction: run Gemini over the combined email + PDF text and map
+ * to ParsedOrder. Returns null when the key is missing or the model fails —
+ * the caller falls back to the regex parser.
+ */
+async function extractWithAI(text: string): Promise<ParsedOrder | null> {
+  if (!hasGemini() || text.trim().length < 20) return null;
+  try {
+    const { kund, order } = await extractOrderWithAI(text);
+    return {
+      orderNumber: order.ordernummer,
+      customerNumber: kund.kundnummer,
+      customerName: kund.namn,
+      customerEmail: kund.epost,
+      customerPhone: kund.telefon,
+      orgNumber: kund.orgnr,
+      address: kund.adress,
+      city: kund.ort,
+      postalCode: kund.postnummer,
+      orderDate: order.orderdatum,
+      amount: order.belopp_exkl_moms,
+      productDescription: order.amne ?? order.beskrivning,
+      customerRef: kund.kontaktperson,
+      ourRef: null,
+      paymentTerms: order.betalvillkor,
+      campaignStart: order.kampanjstart,
+      campaignEnd: order.kampanjslut,
+      campaignDays: order.kampanjlangd_dagar,
+    };
+  } catch (err) {
+    console.error("[webhook] AI extraction failed, falling back to regex:", err);
+    return null;
+  }
+}
+
 async function matchOrCreateCustomer(
   parsed: ParsedOrder
 ): Promise<(typeof customersTable.$inferSelect) | null> {
@@ -163,47 +231,43 @@ async function matchOrCreateCustomer(
     .where(ilike(customersTable.name, parsed.customerName));
   if (byName) {
     console.log(`[webhook] Matched customer by name: ${byName.name}`);
-    // Backfill customerNumber if now known
-    if (parsed.customerNumber && !byName.customerNumber) {
-      await db
-        .update(customersTable)
-        .set({ customerNumber: parsed.customerNumber })
-        .where(eq(customersTable.id, byName.id));
+    // Backfill fields the PDF/AI gave us that the card is missing
+    const backfill: Partial<typeof customersTable.$inferInsert> = {};
+    if (parsed.customerNumber && !byName.customerNumber) backfill.customerNumber = parsed.customerNumber;
+    if (parsed.customerEmail && !byName.email) backfill.email = parsed.customerEmail;
+    if (parsed.customerPhone && !byName.phone) backfill.phone = parsed.customerPhone;
+    if (Object.keys(backfill).length > 0) {
+      await db.update(customersTable).set(backfill).where(eq(customersTable.id, byName.id));
     }
     return byName;
   }
 
-  // 3. Create new customer from PDF data
-  console.log(`[webhook] Creating new customer from PDF: ${parsed.customerName}`);
+  // 3. Create new customer from extracted data
+  console.log(`[webhook] Creating new customer: ${parsed.customerName}`);
+  const notes = [
+    parsed.orgNumber ? `Org.nr: ${parsed.orgNumber}` : null,
+    parsed.customerRef ? `Er referens: ${parsed.customerRef}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const [newCustomer] = await db
     .insert(customersTable)
     .values({
       name: parsed.customerName,
-      email: "",
+      email: parsed.customerEmail ?? "",
+      phone: parsed.customerPhone ?? undefined,
       customerNumber: parsed.customerNumber ?? undefined,
       address: parsed.address ?? undefined,
       city: parsed.city ?? undefined,
       postalCode: parsed.postalCode ?? undefined,
       category: "foretag",
       status: "aktiv",
-      notes: parsed.customerRef
-        ? `Er referens: ${parsed.customerRef}`
-        : undefined,
+      notes: notes || undefined,
     })
     .returning();
 
   return newCustomer;
-}
-
-// ─── Route helpers ────────────────────────────────────────────────────────────
-
-async function withCustomerName(email: typeof emailsTable.$inferSelect) {
-  if (!email.customerId) return { ...email, customerName: null };
-  const [customer] = await db
-    .select()
-    .from(customersTable)
-    .where(eq(customersTable.id, email.customerId));
-  return { ...email, customerName: customer?.name ?? null };
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
@@ -211,30 +275,23 @@ async function withCustomerName(email: typeof emailsTable.$inferSelect) {
 router.get("/emails", async (req, res): Promise<void> => {
   const { customerId, processed } = req.query as Record<string, string>;
 
-  let emails = await db.select().from(emailsTable).orderBy(emailsTable.receivedAt);
-
+  const conditions = [];
   if (customerId) {
-    emails = emails.filter((e) => e.customerId === parseInt(customerId, 10));
+    conditions.push(eq(emailsTable.customerId, parseInt(customerId, 10)));
   }
   if (processed !== undefined) {
-    const processedBool = processed === "true";
-    emails = emails.filter((e) => e.processed === processedBool);
+    conditions.push(eq(emailsTable.processed, processed === "true"));
   }
 
-  const customerIds = [
-    ...new Set(emails.filter((e) => e.customerId).map((e) => e.customerId!)),
-  ];
-  const customers = customerIds.length
-    ? await db.select().from(customersTable)
-    : [];
-  const customerMap = Object.fromEntries(customers.map((c) => [c.id, c.name]));
+  const rows = await db
+    .select({ email: emailsTable, customerName: customersTable.name })
+    .from(emailsTable)
+    .leftJoin(customersTable, eq(emailsTable.customerId, customersTable.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(desc(emailsTable.receivedAt))
+    .limit(500);
 
-  const enriched = emails.reverse().map((e) => ({
-    ...e,
-    customerName: e.customerId ? (customerMap[e.customerId] ?? null) : null,
-  }));
-
-  res.json(enriched);
+  res.json(rows.map(({ email, customerName }) => ({ ...email, customerName })));
 });
 
 router.get("/emails/:id", async (req, res): Promise<void> => {
@@ -244,16 +301,17 @@ router.get("/emails/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const [email] = await db
-    .select()
+  const [row] = await db
+    .select({ email: emailsTable, customerName: customersTable.name })
     .from(emailsTable)
+    .leftJoin(customersTable, eq(emailsTable.customerId, customersTable.id))
     .where(eq(emailsTable.id, params.data.id));
-  if (!email) {
+  if (!row) {
     res.status(404).json({ error: "Email not found" });
     return;
   }
 
-  res.json(await withCustomerName(email));
+  res.json({ ...row.email, customerName: row.customerName });
 });
 
 router.post("/emails/:id/link-customer", async (req, res): Promise<void> => {
@@ -310,10 +368,27 @@ router.post("/emails/:id/link-customer", async (req, res): Promise<void> => {
     occurredAt: email.receivedAt,
   });
 
-  res.json(await withCustomerName(email));
+  const [customer] = await db
+    .select({ name: customersTable.name })
+    .from(customersTable)
+    .where(eq(customersTable.id, parsed.data.customerId));
+  res.json({ ...email, customerName: customer?.name ?? null });
 });
 
 router.post("/emails/webhook", async (req, res): Promise<void> => {
+  // ── Webhook auth: shared secret in the URL (?token=...) ───────────────────
+  // The webhook must be reachable without a login cookie (Postmark calls it),
+  // so it is protected by a token instead. Fail closed when unconfigured.
+  const expectedToken = process.env["POSTMARK_WEBHOOK_TOKEN"];
+  if (!expectedToken) {
+    res.status(503).json({ error: "Webhook är inte konfigurerad (POSTMARK_WEBHOOK_TOKEN saknas)." });
+    return;
+  }
+  if (req.query["token"] !== expectedToken) {
+    res.status(401).json({ error: "Ogiltig webhook-token." });
+    return;
+  }
+
   const parsed = ReceiveEmailWebhookBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -344,15 +419,24 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
       const pdfText = await extractPDFText(pdf.Content);
       if (!pdfText) continue;
 
-      const orderData = parseOrderConfirmation(pdfText);
-      console.log("[webhook] Parsed PDF order data:", orderData);
+      // ── 2. Extract order data: AI first, regex fallback ──────────────────
+      const combinedText = [parsed.data.TextBody as string | undefined, pdfText]
+        .filter(Boolean)
+        .join("\n\n--- PDF ---\n\n");
+
+      let orderData = await extractWithAI(combinedText);
+      let usedAI = orderData !== null;
+      if (!orderData) {
+        orderData = parseOrderConfirmation(pdfText);
+      }
+      console.log(`[webhook] Parsed order data (${usedAI ? "AI" : "regex"}):`, orderData);
 
       if (!orderData.customerName && !orderData.orderNumber) continue;
 
-      // ── 2. Match or create customer ──────────────────────────────────────
+      // ── 3. Match or create customer ──────────────────────────────────────
       let customer = await matchOrCreateCustomer(orderData);
 
-      // If PDF gave us nothing useful, fall back to email-based matching
+      // If extraction gave us nothing useful, fall back to email-based matching
       if (!customer) {
         const [emailMatch] = await db
           .select()
@@ -361,7 +445,7 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
         customer = emailMatch ?? null;
       }
 
-      // ── 3. Store the email record ────────────────────────────────────────
+      // ── 4. Store the email record ────────────────────────────────────────
       const subject =
         parsed.data.Subject ||
         (orderData.orderNumber
@@ -391,7 +475,7 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
         })
         .returning();
 
-      // ── 4. Auto-create order from PDF data ───────────────────────────────
+      // ── 5. Auto-create order from extracted data ─────────────────────────
       if (customer) {
         const orderDate = orderData.orderDate
           ? new Date(orderData.orderDate)
@@ -403,17 +487,24 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
             ? `Er referens: ${orderData.customerRef}`
             : null,
           orderData.ourRef ? `Vår referens: ${orderData.ourRef}` : null,
+          orderData.paymentTerms ? `Betalvillkor: ${orderData.paymentTerms}` : null,
         ]
           .filter(Boolean)
           .join("\n");
 
-        // Kampanjdatum: start = orderdatum, slut = start + kampanjlängd ur texten
+        // Kampanjdatum: AI-extraherade om de finns, annars start = orderdatum
+        // och slut = start + kampanjlängd ur texten
         const campaignStart =
-          orderData.orderDate ?? receivedAt.toISOString().slice(0, 10);
-        const campaignDays = parseCampaignDays(
-          `${orderData.productDescription ?? ""}\n${pdfText}`,
-        );
-        const campaignEnd = addDays(campaignStart, campaignDays);
+          orderData.campaignStart ??
+          orderData.orderDate ??
+          receivedAt.toISOString().slice(0, 10);
+        const campaignEnd =
+          orderData.campaignEnd ??
+          addDays(
+            campaignStart,
+            orderData.campaignDays ??
+              parseCampaignDays(`${orderData.productDescription ?? ""}\n${pdfText}`),
+          );
 
         const [order] = await db
           .insert(ordersTable)
@@ -423,7 +514,7 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
             orderText: pdfText,           // full PDF text — visible & copyable in customer card
             orderNumber: orderData.orderNumber ?? undefined,
             status: "produktion",
-            amount: orderData.amount?.toString() as any,
+            amount: orderData.amount != null ? orderData.amount.toFixed(2) : undefined,
             emailId: emailRecord.id,
             orderDate,
             campaignStart,
@@ -436,7 +527,7 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
           {
             customerId: customer.id,
             type: "order_created",
-            description: `Order #${orderData.orderNumber ?? order.id} skapad automatiskt från PDF`,
+            description: `Order #${orderData.orderNumber ?? order.id} skapad automatiskt från PDF (${usedAI ? "AI-tolkad" : "regeltolkad"})`,
             referenceId: order.id,
             occurredAt: new Date(),
           },
@@ -450,7 +541,7 @@ router.post("/emails/webhook", async (req, res): Promise<void> => {
         ]);
       }
 
-      res.json({ ok: true, auto: true, customer: customer?.name ?? null });
+      res.json({ ok: true, auto: true, ai: usedAI, customer: customer?.name ?? null });
       return;
     }
   }

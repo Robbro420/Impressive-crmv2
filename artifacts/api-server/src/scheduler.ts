@@ -1,5 +1,6 @@
 /**
- * scheduler.ts — Bakgrundsjobb som körs vid start och därefter varje timme.
+ * scheduler.ts — Kampanj-auto-transition, körs av Vercel Cron via
+ * GET /api/cron/campaigns (se routes/cron.ts och vercel.json).
  *
  * Kampanj-auto-transition:
  *   Ordrar med status "aktiv" vars campaign_end har passerat flyttas
@@ -17,7 +18,7 @@ import { db, ordersTable, customersTable, todosTable, timelineTable } from "@wor
 import { and, eq, isNotNull, lt } from "drizzle-orm";
 import type { Logger } from "pino";
 
-async function transitionExpiredCampaigns(logger: Logger): Promise<void> {
+export async function transitionExpiredCampaigns(logger: Logger): Promise<number> {
   const today = new Date().toISOString().slice(0, 10);
 
   // Kandidater (lässteg — det atomiska claimet sker per order nedan)
@@ -84,14 +85,6 @@ async function transitionExpiredCampaigns(logger: Logger): Promise<void> {
   if (transitioned > 0) {
     logger.info({ count: transitioned }, "Kampanjer flyttade till uppföljning");
   }
-}
 
-export function startScheduler(logger: Logger): void {
-  const run = () =>
-    transitionExpiredCampaigns(logger).catch((err) =>
-      logger.error({ err }, "Scheduler: kampanj-transition misslyckades"),
-    );
-
-  run(); // direkt vid boot
-  setInterval(run, 60 * 60 * 1000); // varje timme
+  return transitioned;
 }

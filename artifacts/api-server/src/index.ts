@@ -1,35 +1,13 @@
-import { httpServer } from "./app";
+/**
+ * Local development entry point. In production the app runs as a Vercel
+ * serverless function (see /api/index.ts at the repo root) — this file is
+ * only used for `pnpm dev`.
+ */
+import app from "./app";
 import { logger } from "./lib/logger";
-import { runStartupMigration } from "./startup";
-import { startScheduler } from "./scheduler";
 
-const rawPort = process.env["PORT"];
+const port = Number(process.env["PORT"] ?? 5000);
 
-if (!rawPort) {
-  throw new Error(
-    "PORT environment variable is required but was not provided.",
-  );
-}
-
-const port = Number(rawPort);
-
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
-
-// Run idempotent migration + admin account provisioning before accepting traffic
-runStartupMigration(logger)
-  .then(() => {
-    httpServer.listen(port, (err?: Error) => {
-      if (err) {
-        logger.error({ err }, "Error listening on port");
-        process.exit(1);
-      }
-      logger.info({ port }, "Server listening");
-      startScheduler(logger);
-    });
-  })
-  .catch((err) => {
-    logger.error({ err }, "Startup migration failed — server will not start");
-    process.exit(1);
-  });
+app.listen(port, () => {
+  logger.info({ port }, "API server listening (local dev)");
+});

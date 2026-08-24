@@ -23,8 +23,6 @@ tags:
   - name: cases
   - name: todos
     description: To-do list
-  - name: google
-    description: Google services (Gmail)
 
 paths:
   /healthz:
@@ -660,66 +658,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/EnrichedOrder"
 
-  # ── GOOGLE / GMAIL ─────────────────────────────────────────────────────────
-  /google/gmail/status:
-    get:
-      operationId: getGmailStatus
-      tags: [google]
-      summary: Check whether the Gmail connection is live
-      responses:
-        "200":
-          description: Gmail connection status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GmailStatus"
-
-  /google/gmail/sync:
-    post:
-      operationId: syncGmail
-      tags: [google]
-      summary: Fetch recent Gmail inbox messages into the CRM inbox
-      responses:
-        "200":
-          description: Sync result
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/GmailSyncResult"
-        "502":
-          description: Gmail API error
-          content:
-            application/json:
-              schema:
-                type: object
-                required: [error]
-                properties:
-                  error:
-                    type: string
-
 components:
   schemas:
-    GmailStatus:
-      type: object
-      required: [connected]
-      properties:
-        connected:
-          type: boolean
-        emailAddress:
-          type: string
-          nullable: true
-
-    GmailSyncResult:
-      type: object
-      required: [fetched, imported, linked]
-      properties:
-        fetched:
-          type: number
-        imported:
-          type: number
-        linked:
-          type: number
-
     HealthStatus:
       type: object
       required: [status]

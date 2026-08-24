@@ -5,6 +5,5 @@ export * from "./goals";
 export * from "./timeline";
 export * from "./todos";
 export * from "./cases";
-export * from "./messages";
 export * from "./users";
 export * from "./calendar-logs";

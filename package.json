@@ -1,28 +1,22 @@
 {
-  "name": "workspace",
-  "version": "0.0.0",
+  "name": "impressive-crm",
+  "version": "1.0.0",
   "license": "MIT",
-  "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
-  },
   "private": true,
-  "dependencies": {
-    "@replit/connectors-sdk": "^0.4.1"
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @workspace/api-server run dev",
+    "dev:web": "pnpm --filter @workspace/robbanbro-crm run dev",
+    "build": "pnpm run typecheck && pnpm --filter @workspace/robbanbro-crm run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"@workspace/*\" --if-present run typecheck",
+    "db:push": "pnpm --filter @workspace/db run push",
+    "seed": "pnpm --filter @workspace/scripts run seed"
   },
   "devDependencies": {
     "prettier": "^3.9.6",
     "typescript": "~5.9.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "brace-expansion@>=5.0.0 <5.0.9": ">=5.0.9",
-      "fast-uri@<3.1.5": ">=3.1.5",
-      "js-yaml@>=4.3.0 <4.3.1": "4.3.1",
-      "nanoid@<3.3.18": ">=3.3.18",
-      "orval>js-yaml": "^4.1.0"
-    }
   }
 }

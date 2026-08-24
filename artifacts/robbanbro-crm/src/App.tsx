@@ -16,7 +16,6 @@ import Goals from "@/pages/goals";
 import Todos from "@/pages/todos";
 import Arenden from "@/pages/arenden";
 import Settings from "@/pages/settings"
-import GoogleHub from "@/pages/google-hub";
 import ImportPage from "@/pages/import";
 import Login from "@/pages/login";
 import { useAuth } from "@/hooks/useAuth";
@@ -50,7 +49,6 @@ function Router() {
                 <Route path="/arenden" component={Arenden} />
                 <Route path="/goals" component={Goals} />
                 <Route path="/import" component={ImportPage} />
-                <Route path="/google" component={GoogleHub} />
                 <Route path="/settings" component={Settings} />
                 <Route component={NotFound} />
               </Switch>

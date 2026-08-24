@@ -6,9 +6,7 @@ export interface AuthUser {
   id: number
   username: string
   displayName: string
-  gmailAddress: string | null
   colleagueEmail: string | null
-  chatName: string
 }
 
 let cachedUser: AuthUser | null | "loading" = "loading"

@@ -52,6 +52,7 @@ export const ListCustomersResponse = zod.array(ListCustomersResponseItem)
  */
 
 
+
 export const CreateCustomerBody = zod.object({
   "name": zod.string().min(1),
   "email": zod.string(),
@@ -443,6 +444,7 @@ export const ListGoalsResponse = zod.array(ListGoalsResponseItem)
  */
 
 
+
 export const CreateGoalBody = zod.object({
   "name": zod.string().min(1),
   "metric": zod.string(),
@@ -520,6 +522,7 @@ export const ListCasesResponse = zod.array(ListCasesResponseItem)
 /**
  * @summary Create a case
  */
+
 
 
 export const CreateCaseBody = zod.object({
@@ -600,6 +603,7 @@ export const ListTodosResponse = zod.array(ListTodosResponseItem)
 /**
  * @summary Create a to-do
  */
+
 
 
 export const CreateTodoBody = zod.object({
@@ -771,20 +775,4 @@ export const GetActiveCampaignsResponseItem = zod.object({
 })
 export const GetActiveCampaignsResponse = zod.array(GetActiveCampaignsResponseItem)
 
-/**
- * @summary Check whether the Gmail connection is live
- */
-export const GetGmailStatusResponse = zod.object({
-  "connected": zod.boolean(),
-  "emailAddress": zod.string().nullish()
-})
 
-
-/**
- * @summary Fetch recent Gmail inbox messages into the CRM inbox
- */
-export const SyncGmailResponse = zod.object({
-  "fetched": zod.number(),
-  "imported": zod.number(),
-  "linked": zod.number()
-})

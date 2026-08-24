@@ -1,21 +1,21 @@
 import { GoogleGenAI } from "@google/genai";
 
-if (!process.env.AI_INTEGRATIONS_GEMINI_BASE_URL) {
-  throw new Error(
-    "AI_INTEGRATIONS_GEMINI_BASE_URL must be set. Did you forget to provision the Gemini AI integration?",
-  );
+/**
+ * Gemini client using a direct API key (GEMINI_API_KEY).
+ * Lazily constructed so the API server can boot without the key —
+ * AI features simply report themselves unavailable instead.
+ */
+let _ai: GoogleGenAI | null = null;
+
+export function hasGemini(): boolean {
+  return Boolean(process.env.GEMINI_API_KEY);
 }
 
-if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
-  throw new Error(
-    "AI_INTEGRATIONS_GEMINI_API_KEY must be set. Did you forget to provision the Gemini AI integration?",
-  );
+export function getAi(): GoogleGenAI {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY must be set to use AI features.");
+  }
+  _ai ??= new GoogleGenAI({ apiKey });
+  return _ai;
 }
-
-export const ai = new GoogleGenAI({
-  apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
-  httpOptions: {
-    apiVersion: "",
-    baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-  },
-});
