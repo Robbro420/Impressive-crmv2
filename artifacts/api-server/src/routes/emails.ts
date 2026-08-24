@@ -1,4 +1,3 @@
-import { createRequire } from "node:module";
 import { Router, type IRouter } from "express";
 import { and, desc, eq, ilike } from "drizzle-orm";
 import { db, emailsTable, customersTable, ordersTable, timelineTable } from "@workspace/db";
@@ -8,9 +7,9 @@ import {
   LinkEmailToCustomerBody,
   ReceiveEmailWebhookBody,
 } from "@workspace/api-zod";
+import { extractText, getDocumentProxy } from "unpdf";
 import { extractOrderWithAI, hasGemini } from "../lib/extract-order";
 
-const _require = createRequire(import.meta.url);
 const router: IRouter = Router();
 
 // ─── PDF helpers ─────────────────────────────────────────────────────────────
@@ -59,13 +58,10 @@ const EMPTY_PARSED: ParsedOrder = {
 
 async function extractPDFText(base64Content: string): Promise<string> {
   try {
-    // Import the implementation directly — pdf-parse's index.js runs a
-    // debug block (reads a test PDF from disk) when it has no module.parent,
-    // which crashes in bundled/serverless environments.
-    const pdfParse = _require("pdf-parse/lib/pdf-parse.js");
     const buffer = Buffer.from(base64Content, "base64");
-    const result = await pdfParse(buffer);
-    return result.text as string;
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true });
+    return text;
   } catch (err) {
     console.error("[webhook] PDF parse error:", err);
     return "";

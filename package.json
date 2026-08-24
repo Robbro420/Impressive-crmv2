@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "pnpm --filter @workspace/api-server run dev",
     "dev:web": "pnpm --filter @workspace/robbanbro-crm run dev",
-    "build": "pnpm run typecheck && pnpm --filter @workspace/robbanbro-crm run build",
+    "build": "pnpm run typecheck && pnpm --filter @workspace/robbanbro-crm run build && pnpm --filter @workspace/api-server run bundle",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"@workspace/*\" --if-present run typecheck",
     "db:push": "pnpm --filter @workspace/db run push",

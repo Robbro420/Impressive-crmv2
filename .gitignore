@@ -53,3 +53,6 @@ Thumbs.db
 
 # Local dev database (PGlite)
 .dev-db/
+
+# Generated Vercel function bundle
+api/index.mjs

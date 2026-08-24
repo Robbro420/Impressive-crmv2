@@ -6,9 +6,8 @@
   "framework": null,
   "regions": ["fra1"],
   "functions": {
-    "api/index.ts": {
-      "maxDuration": 60,
-      "memory": 1024
+    "api/index.mjs": {
+      "maxDuration": 60
     }
   },
   "rewrites": [
