@@ -10,6 +10,7 @@ import {
   useListEmails,
   getListEmailsQueryKey,
   useUpdateCustomer,
+  useDeleteCustomer,
   useListTodos,
   useCreateTodo,
   useUpdateTodo,
@@ -76,7 +77,25 @@ export default function CustomerDetail() {
   const todos = allTodos.filter(t => t.customerId === customerId)
 
   const updateCustomer = useUpdateCustomer()
+  const deleteCustomer = useDeleteCustomer()
   const createTodo = useCreateTodo()
+
+  // ── Delete customer ───────────────────────────────────────────────────────
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const confirmDelete = () => {
+    setDeleting(true)
+    deleteCustomer.mutate(
+      { id: customerId },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ["listCustomers"] })
+          setLocation("/customers")
+        },
+        onError: () => setDeleting(false),
+      },
+    )
+  }
   const updateTodo = useUpdateTodo()
   const deleteTodo = useDeleteTodo()
 
@@ -206,7 +225,44 @@ export default function CustomerDetail() {
           <Pencil className="h-3.5 w-3.5" />
           Redigera
         </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setDeleteOpen(true)}
+          className="gap-1.5 shrink-0 text-destructive border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          Radera
+        </Button>
       </div>
+
+      {/* Radera kund-dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Radera {customer.name}?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Kundens <strong className="text-foreground">ordrar och tidslinje raderas permanent</strong>.
+            Mejl, Mersälj och ärenden ligger kvar men kopplas loss från kunden.
+            Det här går inte att ångra.
+          </p>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>
+              Avbryt
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              {deleting ? "Raderar…" : "Ja, radera kunden"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="overview" className="flex flex-col md:flex-row gap-8" orientation="vertical">
         <TabsList className="flex flex-row md:flex-col h-auto justify-start p-0 bg-transparent md:w-48 shrink-0 overflow-x-auto space-x-2 md:space-x-0 md:space-y-1">
